@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include "symbol.hpp"
 
 struct Token {
     enum TokenType {
@@ -99,16 +100,18 @@ class Lexer {
     size_t offset = 0;
     size_t index = 0;
     size_t line = 0;
-    friend int main(int argc, char** argv);
+
+    // Symbol Table
+    SymbolTable* table;
 
     // Consumes a char 
     char Consume(void);
     public:
-    // Get the source code
-    Lexer(std::string& src);
-
     // Turn source code to tokens
     std::vector<Token> Tokenize(void);
+
+    // Get the source code & symbol table
+    Lexer(std::string& src, SymbolTable* t);
 
     private:
     // Helper functions for lexing the source code
