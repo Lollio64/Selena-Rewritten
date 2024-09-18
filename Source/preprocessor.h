@@ -1,4 +1,0 @@
-#ifndef PREPROCCESSOR_H
-#define PREPROCCESSOR_H
-
-#endif /* PREPROCCESSOR_H */

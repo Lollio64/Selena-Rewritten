@@ -1,147 +1,123 @@
-#include "parser.h"
+#include "parser.hpp"
 
 Parser::Parser(std::vector<Token>& token) : tokens(token), index(0) {}
 
-std::optional<Token> Parser::Peek(size_t off) {
-    if(index + off >= tokens.size()) {
+std::optional<Token> Parser::Peek(size_t offset) {
+    if(index + offset >= tokens.size()) {
         return std::nullopt;
     }
-    return tokens.at(index + off);
+    return tokens.at(index + offset);
 }
 
 Token Parser::Consume(void) {
     return tokens.at(index++);
 }
 
-static AstNodeType TypeToDecl(TokenType t) {
+bool Parser::IsTypeSpecifier(TokenType t) {
     switch(t) {
-        case Mat2:
-        return Mat2Decl;
-        break;
-
-        case Mat3:
-        return Mat3Decl;
-        break;
-
+        case Int:
+        case Bool:
+        case Void:
+        case Float:
+        case Struct:
         case Mat4:
-        return Mat4Decl;
-        break;
-
-        case Vec2:
-        return Vec2Decl;
-        break;
-
-        case Vec3:
-        return Vec3Decl;
-        break;
-
+        case Mat3:
+        case Mat2:
         case Vec4:
-        return Vec4Decl;
-        break;
-
-        case IntVar:
-        return IntDecl;
-        break;
-
-        case FloatVar:
-        return FloatDecl;
-        break;
-
-        case BoolVar:
-        return BoolDecl;
-        break;
-
-        default:
-        return Root;
-        break;
+        case Vec3:
+        case Vec2:
+        case IVec4:
+        case IVec3:
+        case IVec2:
+        case BVec4:
+        case BVec3:
+        case BVec2:
+        return true;
     }
+    return false;
 }
 
-std::optional<AstNode> Parser::ParseStatement() {
-    if(Peek().has_value() && Peek().value().type == Uniform) {
-        AstNode uniform(Peek().value(), UniformDecl);
+bool Parser::IsTypeQualifier(TokenType t) {
+    switch(t) {
+        case Attribute:
+        case Varying:
+        case Input:
+        case Inout:
+        case Const:
+        case Output:
+        case Uniform:
+        return true;
+    }
+    return false;
+}
+
+bool Parser::IsPrecisionQualifier(TokenType t) {
+    switch(t) {
+        case Lowp:
+        case Highp:
+        case Mediump:
+        return true;
+    }
+    return false;
+}
+
+bool Parser::IsConstructorIdentifier(TokenType t) {
+    switch(t) {
+        case Int:
+        case Bool:
+        case Float:
+        case Mat4:
+        case Mat3:
+        case Mat2:
+        case Vec4:
+        case Vec3:
+        case Vec2:
+        case IVec4:
+        case IVec3:
+        case IVec2:
+        case BVec4:
+        case BVec3:
+        case BVec2:
+        return true;
+    }
+    return false;
+}
+
+std::optional<ParseNode> Parser::ParseSpecifiedType() {
+    ParseNode node;
+    if(IsTypeQualifier(Peek().value().type)) {
+        node.children.push_back(ParseNode(Peek().value()));
         Consume();
-        if(Peek().has_value()) {
-            auto type = TypeToDecl(Peek().value().type);
-            if(type == Root) {
-                printf("At line %i, there's an invalid type declaration:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            }
-            AstNode unifType(Peek().value(), type);
-            uniform.AddChildNode(unifType);
-            Consume();
-
-            if(Peek().value().type == Identifer) {
-                AstNode unifIdent(Peek().value(), Variable);
-                uniform.AddChildNode(unifIdent);
-                Consume();
-            } else {
-                printf("At line %i, there's a missing or invalid identifier:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            }
-
-            if(!Peek().value().type == SemiColon) {     
-                printf("At line %i, there's a missing semicolon:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            } else Consume();
-            return uniform;
-        }
-    } else if(Peek().has_value() && Peek().value().type == Input) {
-        AstNode input(Peek().value(), InDecl);
+    }
+    if(IsTypeSpecifier(Peek().value().type)) {
+        node.children.push_back(ParseNode(Peek().value()));
         Consume();
-        if(Peek().has_value()) {
-            auto type = TypeToDecl(Peek().value().type);
-            if(type == Root) {
-                printf("At line %i, there's an invalid type declaration:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            }
-            AstNode inType(Peek().value(), type);
-            input.AddChildNode(inType);
+        if(Peek().value().type == Identifer) {
+            node.children.push_back(ParseNode(Peek().value()));
             Consume();
-
-            if(Peek().value().type == Identifer) {
-                AstNode inIdent(Peek().value(), Variable);
-                input.AddChildNode(inIdent);
-                Consume();
-            } else {
-                printf("At line %i, there's a missing or invalid identifier:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            }
-
-            if(!Peek().value().type == SemiColon) {
-                printf("At line %i, there's a missing semicolon:'%s'.", Peek().value().line, Peek().value().value.c_str());
-                exit(EXIT_FAILURE);
-            } else Consume();
-            return input;
-        }
-    } /*else if(Peek().has_value() && TypeToDecl(Peek().value().type) != Root) {
-        AstNode type(Peek().value(), TypeToDecl(Peek().value().type));
-        if(Peek(1).value().type != Identifer) {
-            printf("At line %i, there's a missing or invalid identifier:'%s'.", Peek(1).value().line, Peek(1).value().value.c_str());
-            exit(EXIT_FAILURE);
-        } else Consume();
-        
-        AstNode ident(Peek().value(), Variable);
-        Consume();
-
-        if(Peek().value().type == OpenCurly) {
-            Consume();
-            AstNode funcdecl(Token(type.value.line, None, ""), FunctionDecl);
-            funcdecl.AddChildNode(type);
-            funcdecl.AddChildNode(ident);
-            while(Peek().value().type != CloseCurly) {}
-            Consume();
-        }
-    }*/
+        } else printf("expected identifier after type declaration");
+        return node;
+    }
     return std::nullopt;
 }
 
-std::optional<Ast> Parser::Parse(void) {
-    Ast ast;
-    while(Peek().has_value()) {
-        if(auto stmt = ParseStatement())
-            ast.GetRoot()->AddChildNode(stmt.value());
-        else Consume();
+std::optional<ParseNode> Parser::ParseDeclaration() {
+    ParseNode node;
+    if(IsTypeQualifier(Peek().value().type) || IsTypeSpecifier(Peek().value().type) || IsPrecisionQualifier(Peek().value().type)) {
+        if(auto type = ParseSpecifiedType())
+            if(type.has_value()) node = type.value();
     }
-    return ast;
+    return std::nullopt;
+}
+
+std::optional<ParseNode> Parser::ParseStatement() {
+    return std::nullopt;
+}
+
+std::optional<ParseNode> Parser::Parse(void) {
+    ParseNode node;
+    while(Peek().has_value()) {
+        node.children.push_back(ParseStatement().value());
+    }
+    return node;
 }

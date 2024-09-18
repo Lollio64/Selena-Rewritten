@@ -1,7 +1,7 @@
-#ifndef CODEGENERATOR_H
-#define CODEGENERATOR_H
+#ifndef CODEGENERATOR_PICA_H
+#define CODEGENERATOR_PICA_H
 
-#include "ast.h"
+#include "ast.hpp"
 #include <array>
 #include <vector>
 #include <string>
@@ -15,8 +15,11 @@
 enum { Int, Double, Floating, Boolean, Vector2, Vector3, Vector4, NoReturn };
 
 // A simple Pica Register
-template<int amount>
-using PicaRegister = std::pair<char, std::array<int, amount>>;
+struct PicaRegister {
+    char registerType;
+    int registerValue;
+    std::array<char, 4> swizzleMask;
+};
 
 // A simple Pica Constant can be one of these
 using PicaConstant = std::variant<int[4], float[4], bool>;
@@ -32,29 +35,25 @@ struct PicaRegisters {
 
     // Allocate scalars in free registers
     template<int amount>
-    PicaRegister<amount> Allocate(char reg);
+    PicaRegister Allocate(char reg);
 
     // Frees a scalars specified registers
     template<int amount>
-    void Free(PicaRegister<amount> registers);
+    void Free(PicaRegister registers);
 };
 
 struct PicaVariable {
     char variableType;
-
-    int picaRegisterType;
-    int picaRegisterValue;
-
     std::string variableName;
+
     PicaConstant variableConstant;
+    PicaRegister variableRegister;
 };
 
 struct PicaInstruction {
-    int instructionType;
     PicaVariable dst;
-    PicaVariable src1;
-    PicaVariable src2;
-    PicaVariable src3;
+    PicaVariable src[3];
+    int instructionType;
 };
 
 struct PicaProgram;
