@@ -1,28 +1,45 @@
 #include "lexer.hpp"
 #include <iostream>
+#include "symbol.hpp"
 //#include "preprocessor.hpp"
 
 Lexer::Lexer(std::string& src, SymbolTable* t) : source(src), table(t), index(0), offset(0), line(0) {}
 
 char Lexer::Consume(void) { offset++; return source.at(index++); }
 
-std::map<std::string, Token::TokenType> Lexer::keywords = {
-    {"layout", Token::Layout},
-    {"location", Token::Location},
-    {"uniform", Token::Uniform},
+std::map<std::string, int> Lexer::keywords = {
+    {"=", Token::Equal},
+    {",", Token::Comma},
     {"mat4", Token::Mat4},
     {"vec3", Token::Vec3},
     {"vec2", Token::Vec2},
-    {"*", Token::Multiply},
     {"void", Token::Void},
-    {"(", Token::OpenParenthese},
-    {")", Token::CloseParenthese},
-    {"=", Token::Equal},
+    {"*", Token::Multiply},
     {";", Token::SemiColon},
     {"{", Token::OpenCurly},
     {"}", Token::CloseCurly},
-    {",", Token::Comma}
+    {"layout", Token::Layout},
+    {"uniform", Token::Uniform},
+    {"(", Token::OpenParenthese},
+    {")", Token::CloseParenthese},
+    {"location", Token::Location},
 };
+
+std::string Lexer::GetLine(int line) {
+    std::string ret = "";
+    int currentLine = 1;
+    for(size_t i = 0; i < source.length(); i++) {
+        if(source[i] == '\n') continue;
+        if(currentLine == line - 1) {
+            ret.push_back(source[i]);
+            while(source[i] != '\n') {
+                ret.push_back(source[i++]);
+            }
+            break;
+        }
+    }
+    return ret;
+}
 
 std::vector<Token> Lexer::Tokenize(void) {
     std::vector<Token> tokens;

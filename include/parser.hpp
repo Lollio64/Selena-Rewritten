@@ -5,24 +5,20 @@
 #include "lexer.hpp"
 #include <optional>
 
-enum NodeType {
-    E,
-    T,
-    DECLARATION,
-    FUNCTION_DEFINITION,
-    FUNCTION_CALL,
-    TYPE_QUALIFIER,
-    TYPE_SPECIFIER,
-    PRECISION_QUALIFER,
-    ASSIGNMENT_EXPR,
-    CONDITIONAL_EXPR,
-    PRIMARY_EXPRESSION,
-    EXPRESSION,
-    LOGOR_EXPR,
-    MULTIPLY_EXPR
-};
+using ErrorCallback = void(const std::string&, const std::string&, int, int);
 
 struct ParseNode {
+    enum NodeType {
+        E,
+        T,
+        Declaration,
+        TypeQualifier,
+        TypeSpecifier,
+        PrecisionQualifier,
+        FunctionDefinition,
+        FunctionDeclaration
+    };
+
     std::vector<ParseNode> children;
     NodeType type;
     Token token;
@@ -33,7 +29,7 @@ struct ParseNode {
 
     ParseNode(Token tok, NodeType t = T) : token(tok), type(t) {}
 
-    void Append(const ParseNode &node) {
+    void Append(const ParseNode node) {
         children.insert(children.end(), node.children.begin(), node.children.end());
     }
 
@@ -45,9 +41,13 @@ class Parser {
     // Tokens + Index
     std::vector<Token>& tokens;
     size_t index = 0;
+    Token token;
 
-    // Consumes a token
-    Token Consume(void);
+    // Function to call upon eror
+    ErrorCallback callback;
+
+    // Check for correct token
+    void Match(int t);
     public:
     // Get the tokens
     Parser(std::vector<Token>& token);
@@ -55,18 +55,31 @@ class Parser {
     // Turn tokens into a parse tree
     std::optional<ParseNode> Parse(void);
     private:
-    // Token group checking
-    bool IsTypeSpecifier(TokenType t);
-    bool IsTypeQualifier(TokenType t);
-    bool IsPrecisionQualifier(TokenType t);
-    bool IsConstructorIdentifier(TokenType t);
+    // Helper function for generating an error
+    void Error(const std::string& s, Token t);
 
-    // Parse a statement/declaration
-    std::optional<ParseNode> ParseStatement();
+    // Token group checking
+    static bool IsTypeSpecifier(int t);
+    static bool IsTypeQualifier(int t);
+    static bool IsPrecisionQualifier(int t);
+    static bool IsParameterQualifier(int t);
+    static bool IsConstructorIdentifier(int t);
+
+    // Helper functions for semantic analysis
     std::optional<ParseNode> ParseDeclaration();
+    std::optional<ParseNode> ParseExternalDeclaration();
+    std::optional<ParseNode> ParseSingleDeclaration();
+
+    // Helper functions for type parsing
     std::optional<ParseNode> ParseSpecifiedType();
-  
-    // Peek a few tokens ahead
-    std::optional<Token> Peek(size_t offset = 0);
+    std::optional<ParseNode> ParseTypeSpecifier();
+    std::optional<ParseNode> ParseTypeQualifier();
+    std::optional<ParseNode> ParsePrecisionQualifier();
+
+    std::optional<ParseNode> ParseFunctionHeader();
+    std::optional<ParseNode> ParseFunctionDeclarator();
+    std::optional<ParseNode> ParseParameterDeclaration();
+    std::optional<ParseNode> ParseFunctionPrototype();
+    std::optional<ParseNode> ParseFunctionDefinition();
 };
 #endif /* PARSER_H */

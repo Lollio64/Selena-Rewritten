@@ -3,10 +3,8 @@
 #include <sstream>
 #include <cstdio>
 #include <iostream>
-///#include "parser.h"
-
-//#define AstDebug 0
-//#define TokenDebug
+#include <symbol.hpp>
+#include "parser.hpp"
 
 /*void PrintTokens(std::vector<Token> tokens) {
     for(Token t : tokens) {
@@ -40,19 +38,16 @@ int main(int argc, char* argv[]) {
         contents = contents_stream.str();
     }
 
-    Lexer lexer(contents);
+    // Symbol Table
+    SymbolTable table;
+
+    // Lexical Analysis
+    Lexer lexer(contents, &table);
     std::vector<Token> tokens = lexer.Tokenize();
 
-    for(size_t i = 0; i < tokens.size(); i++)
-        printf("%i:%i '%s'\n", tokens[i].line, tokens[i].offset, tokens[i].value.c_str());
-
-    #if defined TokenDebug
-    printf("Tokens: Token Count: %i\n", tokens.size());
-    PrintTokens(tokens);
-    #endif
-
-    //Parser parser(tokens);
-    //std::optional<Ast> ast = parser.Parse();
+    // Semantic Analysis
+    Parser parser(tokens);
+    std::optional<ParseNode> node = parser.Parse();
 
     #if defined AstDebug
     printf("Ast Root: Node Count: %i\n", ast.value().GetRoot()->children.size());

@@ -5,10 +5,9 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include "symbol.hpp"
 
 struct Token {
-    enum TokenType {
+    enum {
         None,
 
         Void,
@@ -82,16 +81,20 @@ struct Token {
         Invalid,
     };
 
+    int type;
     int line = 0;
     int offset = 0;
-    TokenType type;
     std::string value;
 
-    Token(void) {}
-
-    Token(int line, int offset, TokenType t, std::string val) :
+    Token(int line, int offset, int t, std::string val) :
     line(line), offset(offset), type(t), value(val) {}
+
+    Token(void) {}
 };
+
+std::string TokenToString(int t) {}
+
+class SymbolTable;
 
 class Lexer {
     private:
@@ -106,6 +109,9 @@ class Lexer {
 
     // Consumes a char 
     char Consume(void);
+
+    // Gets contents of a line
+    std::string GetLine(int line);
     public:
     // Turn source code to tokens
     std::vector<Token> Tokenize(void);
@@ -119,6 +125,6 @@ class Lexer {
     std::string ReadString(void);
 
     // A dictionary of valid symbols & keywords
-    static std::map<std::string, Token::TokenType> keywords;
+    static std::map<std::string, int> keywords;
 };
 #endif /* LEXER_H */

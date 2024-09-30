@@ -23,9 +23,11 @@ int SymbolTable::EntryIndex(std::string id) {
 }
 
 void SymbolTable::OpenScope() {
-    scopes.push_back(SymbolTable());
+    scopes.push_back(*this);
+    *this = SymbolTable();
 }
 
 void SymbolTable::CloseScope() {
-    scopes.erase(std::remove(scopes.begin(), scopes.end(), scopes[0]), scopes.end());
+    scopes.erase(std::remove(scopes.begin(), scopes.end(), scopes.end()), scopes.end());
+    *this = scopes.back();
 }
