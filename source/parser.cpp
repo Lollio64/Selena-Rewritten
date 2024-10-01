@@ -108,7 +108,7 @@ std::optional<ParseNode> Parser::ParseFunctionHeader() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseParameterDeclaration() {
+std::optional<ParseNode> Parser::ParseFunctionParameter() {
     ParseNode node = ParseNode(ParseNode::Declaration);
     if(IsParameterQualifier(token.type)) {
         node.children.push_back(token);
@@ -128,14 +128,14 @@ std::optional<ParseNode> Parser::ParseParameterDeclaration() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseFunctionDeclarator() {
+std::optional<ParseNode> Parser::ParseFunctionParameters() {
     ParseNode node = ParseFunctionHeader().value();
     if(token.type != Token::CloseParenthese) {
-        node.children.push_back(ParseParameterDeclaration().value());
+        node.children.push_back(ParseFunctionParameter().value());
         while(token.type == Token::Comma) {
             node.children.push_back(token);
             Match(Token::Comma);
-            node.children.push_back(ParseParameterDeclaration().value());
+            node.children.push_back(ParseFunctionParameter().value());
         }
     }
     return node;
@@ -143,7 +143,7 @@ std::optional<ParseNode> Parser::ParseFunctionDeclarator() {
 
 std::optional<ParseNode> Parser::ParseFunctionPrototype() {
     ParseNode node;
-    node.Append(ParseFunctionDeclarator().value());
+    node.Append(ParseFunctionParameters().value());
     node.children.push_back(token);
     Match(Token::CloseParenthese);
     return node;

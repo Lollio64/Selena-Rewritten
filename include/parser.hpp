@@ -5,10 +5,10 @@
 #include "lexer.hpp"
 #include <optional>
 
-using ErrorCallback = void(const std::string&, const std::string&, int, int);
+using ErrorCallback = void(*)(const std::string&, const std::string&, int, int);
 
 struct ParseNode {
-    enum NodeType {
+    enum {
         E,
         T,
         Declaration,
@@ -19,15 +19,15 @@ struct ParseNode {
         FunctionDeclaration
     };
 
-    std::vector<ParseNode> children;
-    NodeType type;
+    int type;
     Token token;
+    std::vector<ParseNode> children;
 
     ParseNode() : type(E) {}
 
-    ParseNode(NodeType t) : type(t) {}
+    ParseNode(int t) : type(t) {}
 
-    ParseNode(Token tok, NodeType t = T) : token(tok), type(t) {}
+    ParseNode(Token tok, int t = T) : token(tok), type(t) {}
 
     void Append(const ParseNode node) {
         children.insert(children.end(), node.children.begin(), node.children.end());
@@ -43,7 +43,7 @@ class Parser {
     size_t index = 0;
     Token token;
 
-    // Function to call upon eror
+    // Function to call upon error
     ErrorCallback callback;
 
     // Check for correct token
@@ -65,7 +65,7 @@ class Parser {
     static bool IsParameterQualifier(int t);
     static bool IsConstructorIdentifier(int t);
 
-    // Helper functions for semantic analysis
+    // Helper functions for declaration parsing
     std::optional<ParseNode> ParseDeclaration();
     std::optional<ParseNode> ParseExternalDeclaration();
     std::optional<ParseNode> ParseSingleDeclaration();
@@ -76,10 +76,15 @@ class Parser {
     std::optional<ParseNode> ParseTypeQualifier();
     std::optional<ParseNode> ParsePrecisionQualifier();
 
+    // Helper functions for function parsing
     std::optional<ParseNode> ParseFunctionHeader();
-    std::optional<ParseNode> ParseFunctionDeclarator();
-    std::optional<ParseNode> ParseParameterDeclaration();
+    std::optional<ParseNode> ParseFunctionParameters();
+    std::optional<ParseNode> ParseFunctionParameter();
     std::optional<ParseNode> ParseFunctionPrototype();
     std::optional<ParseNode> ParseFunctionDefinition();
+
+    // TODO: Helper functions for statement parsing
+
+    // TODO: Helper functions for expression parsing
 };
 #endif /* PARSER_H */
