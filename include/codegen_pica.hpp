@@ -1,12 +1,15 @@
-#ifndef CODEGENERATOR_PICA_H
-#define CODEGENERATOR_PICA_H
+#ifndef CODEGENERATOR_PICA_HPP
+#define CODEGENERATOR_PICA_HPP
 
-#include "ast.hpp"
+//#include "ast.hpp"
 #include <array>
 #include <vector>
 #include <string>
 #include <memory>
 #include <variant>
+
+class AstNode;
+
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define vectorized [4] = {0}
@@ -87,4 +90,4 @@ class CodeGeneratorPica {
     // IR Program to convert to Assembly
     std::unique_ptr<PicaProgram> program;
 };
-#endif /* CODEGENERATOR_H */
+#endif /* CODEGENERATOR_HPP */

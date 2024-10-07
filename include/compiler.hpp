@@ -1,5 +1,5 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#ifndef COMPILER_HPP
+#define COMPILER_HPP
 
 #include <vector>
 #include <string>
@@ -11,8 +11,8 @@ using ErrorHandler = void(*)(std::string&);
 struct SelenaInfo {
     int shbinSize;
     bool hasCompiled;
-    std::unique_ptr<uint32_t> shbin;
     std::vector<std::string> errors;
+    std::unique_ptr<uint32_t> shbinData;
 };
 
 /**
@@ -29,4 +29,4 @@ void SelenaSetErrorHandler(ErrorHandler handler);
  */
 SelenaInfo SelenaCompileShaderSource(std::string& source);
 
-#endif /* COMPILER_H */
+#endif /* COMPILER_HPP */

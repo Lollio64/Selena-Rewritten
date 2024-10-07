@@ -1,5 +1,5 @@
-#ifndef PREPROCESSOR_H
-#define PREPROCESSOR_H
+#ifndef PREPROCESSOR_HPP
+#define PREPROCESSOR_HPP
 
 #include <string>
 #include <vector>
@@ -20,4 +20,4 @@ class Preprocessor {
     template<typename T>
     void AddMacro(std::string id, T value, std::vector<std::string> params);
 };
-#endif /* PREPROCESSOR_H */
+#endif /* PREPROCESSOR_HPP */

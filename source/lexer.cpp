@@ -22,7 +22,6 @@ std::map<std::string, int> Lexer::keywords = {
     {"uniform", Token::Uniform},
     {"(", Token::OpenParenthese},
     {")", Token::CloseParenthese},
-    {"location", Token::Location},
 };
 
 std::string Lexer::GetLine(int line) {
@@ -49,9 +48,7 @@ std::vector<Token> Lexer::Tokenize(void) {
 
         Token token = Tokenize(buf);
         if(token.type == Token::Invalid) {
-            std::cout << line << ":" << offset
-            << ": error: syntax error '" 
-            << token.value << "'\n";
+            Error("syntax error", token);
         }
         tokens.push_back(token);
     }
@@ -124,4 +121,10 @@ Token Lexer::Tokenize(std::string s) {
         }
     } else t = Token(line, offset, Token::Invalid, s);
     return t;
+}
+
+void Lexer::Error(const std::string& s, Token t) {
+    std::string line = GetLine(t.line);
+    if(callback) 
+        callback(s, line, t.line, t.offset);
 }

@@ -1,11 +1,8 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include "ast.hpp"
 #include "lexer.hpp"
 #include <optional>
-
-using ErrorCallback = void(*)(const std::string&, const std::string&, int, int);
 
 struct ParseNode {
     enum {
@@ -14,9 +11,13 @@ struct ParseNode {
         Declaration,
         TypeQualifier,
         TypeSpecifier,
+        LayoutQualifier,
         PrecisionQualifier,
         FunctionDefinition,
-        FunctionDeclaration
+        FunctionDeclaration,
+        PrimaryExpression,
+        AssigmentExpression,
+        MultiplicativeExpression,
     };
 
     int type;
@@ -38,25 +39,44 @@ struct ParseNode {
 
 class Parser {
     private:
-    // Tokens + Index
-    std::vector<Token>& tokens;
-    size_t index = 0;
+    struct ParserState {
+        Token token;
+        size_t index;
+    };
+
+    Lexer& lexer;
+
+    // Token checking
+    void Match(int t);
+
+    // Lookahead functionality
+    void PopState();
+    void PushState();
+    void RestoreState();
+    void DisableErrors();
+    void EnableErrors();
+
+    // Current Parser State
     Token token;
+    size_t index = 0;
+    std::vector<Token>& tokens;
 
     // Function to call upon error
-    ErrorCallback callback;
+    bool useErrors = false;
+    
+    friend int main(int argc, char* argv[]);
 
-    // Check for correct token
-    void Match(int t);
-    public:
-    // Get the tokens
-    Parser(std::vector<Token>& token);
+    // A dynamic list of parser states
+    std::vector<ParserState> stateStack;
 
     // Turn tokens into a parse tree
     std::optional<ParseNode> Parse(void);
-    private:
+
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
+
+    // Get the tokens
+    Parser(std::vector<Token>& token, Lexer& l);
 
     // Token group checking
     static bool IsTypeSpecifier(int t);
@@ -75,6 +95,7 @@ class Parser {
     std::optional<ParseNode> ParseTypeSpecifier();
     std::optional<ParseNode> ParseTypeQualifier();
     std::optional<ParseNode> ParsePrecisionQualifier();
+    std::optional<ParseNode> ParseLayoutQualifier();
 
     // Helper functions for function parsing
     std::optional<ParseNode> ParseFunctionHeader();
@@ -83,8 +104,19 @@ class Parser {
     std::optional<ParseNode> ParseFunctionPrototype();
     std::optional<ParseNode> ParseFunctionDefinition();
 
-    // TODO: Helper functions for statement parsing
+    // Helper functions for statement parsing
+    std::optional<ParseNode> ParseStatementList();
 
-    // TODO: Helper functions for expression parsing
+    // Helper functions for expression parsing
+    std::optional<ParseNode> ParsePrimaryExpression();
+    std::optional<ParseNode> ParseAssigmentExpression();
+    std::optional<ParseNode> ParseMultiplicativeExpression();
+
+    // TODO: Helper functions for struct parsing
+
+    void(*callback)(const std::string&, const std::string&, int, int);
+
+    // Internal support for the compiler library
+    friend SelenaInfo SelenaCompileShaderSource(std::string& source);
 };
-#endif /* PARSER_H */
+#endif /* PARSER_HPP */

@@ -1,5 +1,5 @@
-#ifndef SYMBOL_H
-#define SYMBOL_H
+#ifndef SYMBOL_HPP
+#define SYMBOL_HPP
 
 #include <string>
 #include <vector>
@@ -25,4 +25,4 @@ class SymbolTable {
     TableEntry* Lookup(std::string id);
     TableEntry* Insert(std::string id, int type);
 };
-#endif /* SYMBOL_H */
+#endif /* SYMBOL_HPP */

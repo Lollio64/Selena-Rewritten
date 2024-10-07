@@ -1,5 +1,5 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef LEXER_HPP
+#define LEXER_HPP
 
 #include <map>
 #include <string>
@@ -40,7 +40,6 @@ struct Token {
         Output,
         Layout,
         Uniform,
-        Location,
         Attribute,
         Varying,
 
@@ -92,12 +91,17 @@ struct Token {
     Token(void) {}
 };
 
-std::string TokenToString(int t) {}
+//std::string TokenToString(int t) { return ""; }
 
 class SymbolTable;
+struct SelenaInfo;
 
 class Lexer {
     private:
+    // Keep everything internal for library
+    friend int main(int argc, char* argv[]);
+    friend class Parser;
+
     // Source Code + Index
     std::string& source;
     size_t offset = 0;
@@ -112,19 +116,24 @@ class Lexer {
 
     // Gets contents of a line
     std::string GetLine(int line);
-    public:
+
     // Turn source code to tokens
     std::vector<Token> Tokenize(void);
 
     // Get the source code & symbol table
     Lexer(std::string& src, SymbolTable* t);
 
-    private:
     // Helper functions for lexing the source code
     Token Tokenize(std::string s);
     std::string ReadString(void);
 
+    // Helper function for generating an error
+    void Error(const std::string& s, Token t);
+
     // A dictionary of valid symbols & keywords
     static std::map<std::string, int> keywords;
+
+    friend SelenaInfo SelenaCompileShaderSource(std::string& source);
+    void(*callback)(const std::string&, const std::string&, int, int);
 };
-#endif /* LEXER_H */
+#endif /* LEXER_HPP */

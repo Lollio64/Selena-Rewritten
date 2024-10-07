@@ -28,6 +28,6 @@ void SymbolTable::OpenScope() {
 }
 
 void SymbolTable::CloseScope() {
-    scopes.erase(std::remove(scopes.begin(), scopes.end(), scopes.end()), scopes.end());
+    ///scopes.erase(std::remove(scopes.begin(), scopes.end(), scopes.end()), scopes.end());
     *this = scopes.back();
 }
