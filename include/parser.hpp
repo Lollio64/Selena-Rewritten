@@ -37,6 +37,8 @@ struct ParseNode {
     //bool Empty() { return children.size() == 0 && type == E; }
 };
 
+class SymbolTable;
+
 class Parser {
     private:
     struct ParserState {
@@ -44,7 +46,8 @@ class Parser {
         size_t index;
     };
 
-    Lexer& lexer;
+    // Symbol Table
+    SymbolTable& table;
 
     // Token checking
     void Match(int t);
@@ -64,7 +67,9 @@ class Parser {
     // Function to call upon error
     bool useErrors = false;
     
+    #ifndef LIBRARY
     friend int main(int argc, char* argv[]);
+    #endif
 
     // A dynamic list of parser states
     std::vector<ParserState> stateStack;
@@ -76,7 +81,7 @@ class Parser {
     void Error(const std::string& s, Token t);
 
     // Get the tokens
-    Parser(std::vector<Token>& token, Lexer& l);
+    Parser(std::vector<Token>& token, SymbolTable& t);
 
     // Token group checking
     static bool IsTypeSpecifier(int t);
@@ -114,6 +119,7 @@ class Parser {
 
     // TODO: Helper functions for struct parsing
 
+    std::string(Lexer::*ReceiveLine)(int line);
     void(*callback)(const std::string&, const std::string&, int, int);
 
     // Internal support for the compiler library

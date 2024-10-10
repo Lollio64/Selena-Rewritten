@@ -1,9 +1,8 @@
 #include "lexer.hpp"
 #include <iostream>
-#include "symbol.hpp"
 //#include "preprocessor.hpp"
 
-Lexer::Lexer(std::string& src, SymbolTable* t) : source(src), table(t), index(0), offset(0), line(0) {}
+Lexer::Lexer(std::string& src) : source(src), index(0), offset(0), line(0) {}
 
 char Lexer::Consume(void) { offset++; return source.at(index++); }
 
@@ -91,8 +90,7 @@ std::string Lexer::ReadString(void) {
         line++;
         offset = 0;
     } else if(std::isspace(source[index])) {
-        index++;
-        offset++;
+        Consume();
     } else {          
         while(!std::isspace(source[index]) && !std::isalnum(source[index])) {
             ret.push_back(Consume());
@@ -109,8 +107,6 @@ Token Lexer::Tokenize(std::string s) {
         t = Token(line, offset, keywords.find(s)->second, s);
     } else if(std::isalpha(s[0])) {
         t = Token(line, offset, Token::Identifer, s);
-        if(!table->Lookup(s))
-            table->Insert(s, Token::Identifer);
     } else if(std::isdigit(s[0])) {
         for(int i = 0; i < s.length(); i++) {
             if(s[i] == '.') {

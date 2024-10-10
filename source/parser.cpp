@@ -1,6 +1,7 @@
 #include "parser.hpp"
+#include "symbol.hpp"
 
-Parser::Parser(std::vector<Token>& token, Lexer& l) : tokens(token), lexer(l), index(0) {}
+Parser::Parser(std::vector<Token>& token, SymbolTable& t) : tokens(token), table(t), index(0) {}
 
 void Parser::Match(int t) {
     if(token.type == t)
@@ -11,7 +12,7 @@ void Parser::Match(int t) {
 }
 
 void Parser::Error(const std::string& s, Token t) {
-    std::string line = lexer.GetLine(t.line);
+    std::string line /*= Lexer::*ReceiveLine(t.line)*/;
     if(callback) {
         if(useErrors) {
             callback(s, line, t.line, t.offset);
@@ -118,6 +119,11 @@ bool Parser::IsConstructorIdentifier(int t) {
         return true;
     }
     return false;
+}
+
+std::optional<ParseNode> Parser::ParsePrimaryExpression() {
+    ParseNode node = ParseNode(ParseNode::PrimaryExpression);
+    return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
@@ -243,6 +249,10 @@ std::optional<ParseNode> Parser::ParseSingleDeclaration() {
     node.Append(ParseSpecifiedType().value());
     node.children.push_back(token);
     Match(Token::Identifer);
+
+    if(!table.Lookup(tokens[index - 1].value)) {
+        TableEntry* entry = table.Insert(tokens[index - 1].value, tokens[index - 2].type);
+    }
     return node;
 }
 

@@ -20,10 +20,11 @@ SelenaInfo SelenaCompileShaderSource(std::string& source) {
     SymbolTable table = {};
     errors.clear();
 
-    Lexer lexer = Lexer(source, &table);
+    Lexer lexer = Lexer(source);
+    lexer.callback = ErrorCallback;
     std::vector<Token> tokens = lexer.Tokenize();
 
-    Parser parser = Parser(tokens, lexer);
+    Parser parser = Parser(tokens, table);
     parser.callback = ErrorCallback;
 
     std::optional<ParseNode> node = parser.Parse();

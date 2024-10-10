@@ -91,15 +91,16 @@ struct Token {
     Token(void) {}
 };
 
-//std::string TokenToString(int t) { return ""; }
+std::string TokenToString(int t) { return ""; }
 
-class SymbolTable;
 struct SelenaInfo;
 
 class Lexer {
     private:
     // Keep everything internal for library
+    #ifndef LIBRARY
     friend int main(int argc, char* argv[]);
+    #endif
     friend class Parser;
 
     // Source Code + Index
@@ -108,20 +109,17 @@ class Lexer {
     size_t index = 0;
     size_t line = 0;
 
-    // Symbol Table
-    SymbolTable* table;
-
     // Consumes a char 
     char Consume(void);
+
+    // Get the source code
+    Lexer(std::string& src);
 
     // Gets contents of a line
     std::string GetLine(int line);
 
     // Turn source code to tokens
     std::vector<Token> Tokenize(void);
-
-    // Get the source code & symbol table
-    Lexer(std::string& src, SymbolTable* t);
 
     // Helper functions for lexing the source code
     Token Tokenize(std::string s);

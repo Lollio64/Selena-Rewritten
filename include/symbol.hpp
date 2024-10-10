@@ -6,9 +6,9 @@
 
 struct TableEntry {
     int entryType;
-    std::string identifer;
     int typeSpecifier;
     int typeQualifier;
+    std::string identifer;
 };
 
 class SymbolTable {

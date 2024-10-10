@@ -4,7 +4,7 @@ Selena Rewritten is a GLSL compiler for the PICA200.<br>
 Selena Rewritten is a rewritten version [Selena](https://github.com/machinamentum/Selena), a now sadly discontinued and outdated/unfinished GLSL compiler for the GPU.<br>
 All files in the `examples` folder are there demonstrate the compiler.<br>
 ## How to build
-Right now, you can only through the Command Line Interface, compile the compiler via a C++ 17 or above compiler (I'm not actually sure if lower versions work), I think I'll make a Makefile for that.<br>
+To compile the compiler you need to use a compiler that can create a macro at compile time (in the Makefile, by default GCC is assumed, change it if neccessary).<br>
 In the future, I will provide a devkitPro Makefile to automatically compile the shaders at runtime.<br>
 Or you'll be able to compile the shaders at compile time, via a libctru implementation or through compiling the compiler without the `main.cpp` file.<br>
 ## Contribution

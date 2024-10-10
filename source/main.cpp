@@ -4,66 +4,74 @@
 #include <cstdio>
 #include <iostream>
 #include "symbol.hpp"
-//#include "parser.hpp"
+#include "parser.hpp"
+#include <cstring>
 
-#define ANSI_COLOR_YELLOW  "\x1b[0;31m"
+#define ANSI_COLOR_RED  "\x1b[0;31m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+static std::string SlurpFile(const std::string& path) {
+    std::stringstream fileContents;
+    std::fstream input(path, std::ios::in);
+    if(!input.is_open())
+        std::printf(ANSI_COLOR_RED "error:" ANSI_COLOR_RESET 
+             "no such file or directory:" 
+            "\'%s\'\n", path);
+    fileContents << input.rdbuf();
+    input.close(); // Good practice, I guess
+    return fileContents.str();
+}
 
-/*void PrintTokens(std::vector<Token> tokens) {
-    for(Token t : tokens) {
-        printf("Line: %i Value: %s Type: %s ValueType: %s\n", t.line, t.value.c_str(), 
-        t.type == Identifer ? "Identifier" : "Keyword or Symbol", 
-        t.type == Integer ? "Integer" : t.type == Float ? "Float" : "");
+static void PrintHelp(const std::string &ExecName) {
+    std::printf("Usage: %s <input_shader> [options]\n", ExecName.c_str());
+    std::printf("Options:\n");
+    std::printf("     -o, --output       | Select output file\n");
+    std::printf("     -h, --help         | Show this help message\n");
+    std::printf("     -v, --verbose      | Print parse and syntax tree structures\n");
+    std::printf("     -s, --assembly     | Output picasso assembly\n");
+}
+
+static bool hasErrored = false;
+void ErrorHandler(const std::string& errMsg, const std::string& offLine, int line, int offset) {
+    printf(ANSI_COLOR_RED "error:" ANSI_COLOR_RESET "%d:%d: %s\n%s\n", line, offset, errMsg.c_str(), offLine.c_str());
+    printf("%*c^\n", offset, ' ');
+}
+
+static std::string output = "";
+void ProcessArguments(int argc, char* argv[]) {
+    for(int i = 0; i < argc; i++) {
+        if(std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help")) {
+            PrintHelp(argv[0]);
+            std::exit(EXIT_SUCCESS);
+        } else if(std::strcmp(argv[i], "-o") == 0 || std::strcmp(argv[i], "--output")) {
+            output = argv[i++];
+            continue;
+        }
     }
-}*/
-
-/*void PrintAstNode(AstNode node, int ident) {
-    std::string iBuf = "";
-    for(int i = 0; i < ident; i++)
-        iBuf.append(" ");
-    printf("%s", iBuf.c_str());
-    printf("Line: %i Value: %s Type: %s ValueType: %s\n", node.value.line, node.value.value.c_str(), 
-    node.value.type == Identifer ? "Identifier" : "Keyword or Symbol", 
-    node.value.type == Integer ? "Integer" : node.value.type == Float ? "Float" : "");
-
-    if(!node.children.empty())
-        for(AstNode child : node.children)
-            PrintAstNode(child, ident + 4);
-}*/
-
-void ErrorHandler(const std::string&, const std::string&, int, int) {}
+}
 
 int main(int argc, char* argv[]) {
     // Read source code
-    std::string contents;
-    {
-        std::stringstream contents_stream;
-        std::fstream input(argv[1], std::ios::in);
-        contents_stream << input.rdbuf();
-        contents = contents_stream.str();
-    }
+    std::string source = SlurpFile(argv[1]);
+
+    // Process arguments
+    ProcessArguments(argc, argv);
+
+    if(source.empty()) return 0;
 
     // Symbol Table
     SymbolTable table;
 
     // Lexical Analysis
-    Lexer lexer(contents, &table);
+    Lexer lexer(source);
     lexer.callback = ErrorHandler;
     std::vector<Token> tokens = lexer.Tokenize();
 
-    for(Token t : tokens) {
-        std::printf( ANSI_COLOR_YELLOW "info:" ANSI_COLOR_RESET "%i:%i: found token" "\n%s\n ^\n", t.line, t.offset, t.value.c_str());
-    }
-
     // Semantic Analysis
-    //Parser parser(tokens);
-    //std::optional<ParseNode> node = parser.Parse();
-
-    #if defined AstDebug
-    printf("Ast Root: Node Count: %i\n", ast.value().GetRoot()->children.size());
-    PrintAstNode(*ast.value().GetRoot(), 4);
-    #endif
+    Parser parser(tokens, table);
+    parser.callback = ErrorHandler;
+    parser.ReceiveLine = Lexer::GetLine;
+    std::optional<ParseNode> node = parser.Parse();
 
     return 0;
 }

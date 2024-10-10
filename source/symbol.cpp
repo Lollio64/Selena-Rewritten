@@ -3,9 +3,8 @@
 
 TableEntry* SymbolTable::Insert(std::string id, int type) {
     if(EntryIndex(id) == -1) {
-        entries.push_back((TableEntry){type, id});
+        entries.push_back((TableEntry){type, 0, 0, id});
     }
-
     return Lookup(id);
 }
 
@@ -28,6 +27,6 @@ void SymbolTable::OpenScope() {
 }
 
 void SymbolTable::CloseScope() {
-    ///scopes.erase(std::remove(scopes.begin(), scopes.end(), scopes.end()), scopes.end());
+    scopes.pop_back();
     *this = scopes.back();
 }

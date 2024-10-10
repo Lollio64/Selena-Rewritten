@@ -27,7 +27,7 @@ struct PicaRegister {
 // A simple Pica Constant can be one of these
 using PicaConstant = std::variant<int[4], float[4], bool>;
 
-struct PicaRegisters {
+struct PicaRegisterFile {
     int ints[4] vectorized;
     int bools[16] = {0};
     int floats[96] vectorized;
@@ -74,7 +74,7 @@ struct PicaFunction {
 struct PicaProgram {
     std::vector<PicaFunction> functions;
     std::vector<PicaVariable> globals;
-    PicaRegisters registers;
+    PicaRegisterFile registers;
 };
 
 std::unique_ptr<PicaProgram> BuildIR(AstNode* root);
