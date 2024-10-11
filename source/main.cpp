@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include "symbol.hpp"
-#include "parser.hpp"
+//#include "parser.hpp"
 #include <cstring>
 
 #define ANSI_COLOR_RED  "\x1b[0;31m"
@@ -68,10 +68,10 @@ int main(int argc, char* argv[]) {
     std::vector<Token> tokens = lexer.Tokenize();
 
     // Semantic Analysis
-    Parser parser(tokens, table);
+    /*Parser parser(tokens, table);
     parser.callback = ErrorHandler;
     parser.ReceiveLine = Lexer::GetLine;
-    std::optional<ParseNode> node = parser.Parse();
+    std::optional<ParseNode> node = parser.Parse();*/
 
     return 0;
 }

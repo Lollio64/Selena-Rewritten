@@ -91,7 +91,7 @@ struct Token {
     Token(void) {}
 };
 
-std::string TokenToString(int t) { return ""; }
+//extern std::string TokenToString(int t) { return ""; }
 
 struct SelenaInfo;
 
