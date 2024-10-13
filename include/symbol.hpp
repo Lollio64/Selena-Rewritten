@@ -5,6 +5,13 @@
 #include <vector>
 
 struct TableEntry {
+    enum {
+        Global,
+        Function,
+        Variable,
+        Parameter,
+    };
+
     int entryType;
     int typeSpecifier;
     int typeQualifier;
@@ -13,14 +20,19 @@ struct TableEntry {
 
 class SymbolTable {
     public:
+    SymbolTable();
+
     void OpenScope();
     void CloseScope();
 
     int EntryIndex(std::string id);
 
-    // Table storage
+    // Scopes and Table entries
     std::vector<TableEntry> entries;
     std::vector<SymbolTable> scopes;
+
+    // Reserved keywords
+    std::vector<std::string> reserved;
 
     TableEntry* Lookup(std::string id);
     TableEntry* Insert(std::string id, int type);

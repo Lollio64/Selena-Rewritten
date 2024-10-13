@@ -3,3 +3,8 @@
 *.exe
 build/
 .vscode/
+
+# Compiler output
+*.shbin
+*.v.pica
+*.g.pica

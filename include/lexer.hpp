@@ -88,17 +88,19 @@ struct Token {
     Token(int line, int offset, int t, std::string val) :
     line(line), offset(offset), type(t), value(val) {}
 
+    static std::string TokenToString(int t) { return ""; }
+
     Token(void) {}
 };
 
-//extern std::string TokenToString(int t) { return ""; }
-
+// Forward declaration
 struct SelenaInfo;
+class SymbolTable;
 
 class Lexer {
     private:
     // Keep everything internal for library
-    #ifndef LIBRARY
+    #ifndef __3DS__
     friend int main(int argc, char* argv[]);
     #endif
     friend class Parser;
@@ -109,14 +111,11 @@ class Lexer {
     size_t index = 0;
     size_t line = 0;
 
+    // Reserved keywords
+    SymbolTable& table;
+
     // Consumes a char 
     char Consume(void);
-
-    // Get the source code
-    Lexer(std::string& src);
-
-    // Gets contents of a line
-    std::string GetLine(int line);
 
     // Turn source code to tokens
     std::vector<Token> Tokenize(void);
@@ -125,13 +124,20 @@ class Lexer {
     Token Tokenize(std::string s);
     std::string ReadString(void);
 
+    // Get the source code & symbol table
+    Lexer(std::string& src, SymbolTable& t);
+
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
 
     // A dictionary of valid symbols & keywords
     static std::map<std::string, int> keywords;
 
-    friend SelenaInfo SelenaCompileShaderSource(std::string& source);
+    // Error handling
+    std::string(*ReceiveLine)(std::string& source, int line);
     void(*callback)(const std::string&, const std::string&, int, int);
+
+    // Internal support for the compiler library
+    friend SelenaInfo SelenaCompileShaderSource(std::string& source);
 };
 #endif /* LEXER_HPP */

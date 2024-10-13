@@ -1,8 +1,9 @@
 #include "lexer.hpp"
 #include <iostream>
+#include "symbol.hpp"
 //#include "preprocessor.hpp"
 
-Lexer::Lexer(std::string& src) : source(src), index(0), offset(0), line(0) {}
+Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), index(0), offset(0), line(0), table(t) {}
 
 char Lexer::Consume(void) { offset++; return source.at(index++); }
 
@@ -23,22 +24,6 @@ std::map<std::string, int> Lexer::keywords = {
     {")", Token::CloseParenthese},
 };
 
-std::string Lexer::GetLine(int line) {
-    std::string ret = "";
-    int currentLine = 1;
-    for(size_t i = 0; i < source.length(); i++) {
-        if(source[i] == '\n') continue;
-        if(currentLine == line - 1) {
-            ret.push_back(source[i]);
-            while(source[i] != '\n') {
-                ret.push_back(source[i++]);
-            }
-            break;
-        }
-    }
-    return ret;
-}
-
 std::vector<Token> Lexer::Tokenize(void) {
     std::vector<Token> tokens;
     while(index < source.length()) {
@@ -48,6 +33,18 @@ std::vector<Token> Lexer::Tokenize(void) {
         Token token = Tokenize(buf);
         if(token.type == Token::Invalid) {
             Error("syntax error", token);
+        }
+        if(token.type == Token::Identifer) {
+            if(token.value[0] == 'g' && token.value[1] == 'l' 
+            && token.value[2] == '_'&& !table.Lookup(token.value)) {
+                Error("illegal usage of reserved keyword", token);
+            }
+            for(size_t i = 0; i < table.reserved.size(); i++) {
+                if(token.value == table.reserved.at(i)) {
+                    Error("illegal usage of reserved keyword", token);
+                    break;
+                }
+            }
         }
         tokens.push_back(token);
     }
@@ -120,7 +117,7 @@ Token Lexer::Tokenize(std::string s) {
 }
 
 void Lexer::Error(const std::string& s, Token t) {
-    std::string line = GetLine(t.line);
+    std::string line = ReceiveLine(source, t.line);
     if(callback) 
         callback(s, line, t.line, t.offset);
 }

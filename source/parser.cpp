@@ -1,18 +1,18 @@
 #include "parser.hpp"
 #include "symbol.hpp"
 
-Parser::Parser(std::vector<Token>& token, SymbolTable& t) : tokens(token), table(t), index(0) {}
+Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : tokens(token), table(t), index(0), source(s) {}
 
 void Parser::Match(int t) {
     if(token.type == t)
         token = tokens[index++];
     else
-        Error("expected" + TokenToString(t) + "before" 
-        + TokenToString(token.type), token);
+        Error("expected" + Token::TokenToString(t) + "before" 
+        + Token::TokenToString(token.type), token);
 }
 
 void Parser::Error(const std::string& s, Token t) {
-    std::string line /*= Lexer::*ReceiveLine(t.line)*/;
+    std::string line  = ReceiveLine(source, t.line);
     if(callback) {
         if(useErrors) {
             callback(s, line, t.line, t.offset);
@@ -307,7 +307,7 @@ std::optional<ParseNode> Parser::ParseExternalDeclaration() {
     return ParseDeclaration();
 }
 
-std::optional<ParseNode> Parser::Parse(void) {
+std::optional<ParseNode> Parser::ParseTranslationUnit(void) {
     ParseNode node;
     while(index < tokens.size()) {
         if(auto stmt = ParseExternalDeclaration())

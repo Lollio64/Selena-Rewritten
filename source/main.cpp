@@ -4,11 +4,32 @@
 #include <cstdio>
 #include <iostream>
 #include "symbol.hpp"
-//#include "parser.hpp"
+#include "parser.hpp"
 #include <cstring>
 
 #define ANSI_COLOR_RED  "\x1b[0;31m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
+
+/* A bunch of helper functions */
+
+std::string ReceiveLine(std::string& source, int line) {
+    std::string ret = "";
+    int currentLine = 1;
+    for(size_t i = 0; i < source.length(); i++) {
+        if(source[i] == '\n') { 
+            currentLine++;
+            continue; 
+        }
+        if(currentLine == line) {
+            ret.push_back(source[i]);
+            while(source[i] != '\n') {
+                ret.push_back(source[i++]);
+            }
+            break;
+        }
+    }
+    return ret;
+}
 
 static std::string SlurpFile(const std::string& path) {
     std::stringstream fileContents;
@@ -27,7 +48,7 @@ static void PrintHelp(const std::string &ExecName) {
     std::printf("Options:\n");
     std::printf("     -o, --output       | Select output file\n");
     std::printf("     -h, --help         | Show this help message\n");
-    std::printf("     -v, --verbose      | Print parse and syntax tree structures\n");
+    std::printf("     -v, --verbose      | Print parse and abstract syntax tree structures\n");
     std::printf("     -s, --assembly     | Output picasso assembly\n");
 }
 
@@ -39,7 +60,7 @@ void ErrorHandler(const std::string& errMsg, const std::string& offLine, int lin
 
 static std::string output = "";
 void ProcessArguments(int argc, char* argv[]) {
-    for(int i = 0; i < argc; i++) {
+    for(int i = 2; i < argc; i++) {
         if(std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help")) {
             PrintHelp(argv[0]);
             std::exit(EXIT_SUCCESS);
@@ -53,25 +74,25 @@ void ProcessArguments(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
     // Read source code
     std::string source = SlurpFile(argv[1]);
+    if(source.empty()) return 0;
 
     // Process arguments
-    ProcessArguments(argc, argv);
-
-    if(source.empty()) return 0;
+    //ProcessArguments(argc, argv);
 
     // Symbol Table
     SymbolTable table;
 
     // Lexical Analysis
-    Lexer lexer(source);
+    Lexer lexer(source, table);
     lexer.callback = ErrorHandler;
+    lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
-    // Semantic Analysis
-    /*Parser parser(tokens, table);
+    // Syntactic & Semantic Analysis
+    Parser parser(tokens, table, source);
     parser.callback = ErrorHandler;
-    parser.ReceiveLine = Lexer::GetLine;
-    std::optional<ParseNode> node = parser.Parse();*/
+    parser.ReceiveLine = ReceiveLine;
+    std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
     return 0;
 }

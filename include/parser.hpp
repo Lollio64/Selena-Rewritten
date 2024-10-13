@@ -67,21 +67,21 @@ class Parser {
     // Function to call upon error
     bool useErrors = false;
     
-    #ifndef LIBRARY
+    #ifndef __3DS__
     friend int main(int argc, char* argv[]);
     #endif
 
     // A dynamic list of parser states
     std::vector<ParserState> stateStack;
 
-    // Turn tokens into a parse tree
-    std::optional<ParseNode> Parse(void);
-
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
 
     // Get the tokens
-    Parser(std::vector<Token>& token, SymbolTable& t);
+    Parser(std::vector<Token>& token, SymbolTable& t, std::string& s);
+
+    // Turn tokens into a parse tree
+    std::optional<ParseNode> ParseTranslationUnit(void);
 
     // Token group checking
     static bool IsTypeSpecifier(int t);
@@ -119,7 +119,9 @@ class Parser {
 
     // TODO: Helper functions for struct parsing
 
-    std::string(Lexer::*ReceiveLine)(int line);
+    // Error handling
+    std::string& source;
+    std::string(*ReceiveLine)(std::string& source, int line);
     void(*callback)(const std::string&, const std::string&, int, int);
 
     // Internal support for the compiler library

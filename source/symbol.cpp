@@ -1,5 +1,6 @@
 #include "symbol.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 TableEntry* SymbolTable::Insert(std::string id, int type) {
     if(EntryIndex(id) == -1) {
@@ -9,7 +10,8 @@ TableEntry* SymbolTable::Insert(std::string id, int type) {
 }
 
 TableEntry* SymbolTable::Lookup(std::string id) {
-    return &entries[EntryIndex(id)];
+    int index = EntryIndex(id);
+    return index == -1 ? nullptr : &entries[EntryIndex(id)];
 }
 
 int SymbolTable::EntryIndex(std::string id) {
@@ -29,4 +31,13 @@ void SymbolTable::OpenScope() {
 void SymbolTable::CloseScope() {
     scopes.pop_back();
     *this = scopes.back();
+}
+
+SymbolTable::SymbolTable() {
+    // Insert all reserved keywords for lexing
+    entries.reserve(2);
+    Insert("gl_Position", TableEntry::Global);
+    Insert("gl_TexCoord0", TableEntry::Global);
+    reserved.reserve(1);
+    reserved.push_back("char");
 }
