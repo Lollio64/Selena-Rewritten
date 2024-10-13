@@ -21,6 +21,8 @@ SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 
+# Fix having multiple Makefiles in the same directory and stuff
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
