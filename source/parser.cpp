@@ -7,8 +7,8 @@ void Parser::Match(int t) {
     if(token.type == t)
         token = tokens[index++];
     else
-        Error("expected" + Token::TokenToString(t) + "before" 
-        + Token::TokenToString(token.type), token);
+        Error("expected " + Token::TokenToString(t) + "before " 
+        + Token::TokenToString(token), token);
 }
 
 void Parser::Error(const std::string& s, Token t) {
@@ -200,18 +200,18 @@ std::optional<ParseNode> Parser::ParsePrecisionQualifier() {
 }
 
 std::optional<ParseNode> Parser::ParseLayoutQualifier() {
-    ParseNode node = ParseNode(ParseNode::LayoutQualifier);
+    ParseNode node;
     if(token.type == Token::Layout) {
+        node = ParseNode(ParseNode::LayoutQualifier);
         node.children.push_back(token);
         Match(Token::Layout);
-        node.children.push_back(token);
-        Match(Token::OpenParenthese);
-        node.children.push_back(token);
-        node.Append(ParseAssigmentExpression().value());
-        node.children.push_back(token);
-        Match(Token::CloseParenthese);
-        return node;
+        if(token.type == Token::OpenParenthese) {
+            node.Append(ParsePrimaryExpression().value());
+            return node;
+        }
+        return std::nullopt;
     }
+    Error("expected layout qualifier before " + Token::TokenToString(token), token);
     return std::nullopt;
 }
 
@@ -249,10 +249,6 @@ std::optional<ParseNode> Parser::ParseSingleDeclaration() {
     node.Append(ParseSpecifiedType().value());
     node.children.push_back(token);
     Match(Token::Identifer);
-
-    if(!table.Lookup(tokens[index - 1].value)) {
-        TableEntry* entry = table.Insert(tokens[index - 1].value, tokens[index - 2].type);
-    }
     return node;
 }
 
@@ -266,6 +262,13 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
         node.children.push_back(token);
         Match(Token::SemiColon);
         return node;
+    }
+    if(token.type == Token::Layout) {
+        node = ParseNode(ParseNode::Declaration);
+        node.Append(ParseLayoutQualifier().value());
+        node.Append(ParseSingleDeclaration().value());
+        node.children.push_back(token);
+        Match(Token::SemiColon);
     }
     PushState();
     DisableErrors();

@@ -12,7 +12,7 @@
 
 /* A bunch of helper functions */
 
-std::string ReceiveLine(std::string& source, int line) {
+static std::string ReceiveLine(std::string& source, int line) {
     std::string ret = "";
     int currentLine = 1;
     for(size_t i = 0; i < source.length(); i++) {
@@ -35,16 +35,17 @@ static std::string SlurpFile(const std::string& path) {
     std::stringstream fileContents;
     std::fstream input(path, std::ios::in);
     if(!input.is_open())
-        std::printf(ANSI_COLOR_RED "error:" ANSI_COLOR_RESET 
-             "no such file or directory:" 
-            "\'%s\'\n", path);
+        std::printf(ANSI_COLOR_RED "fatal error: " 
+            ANSI_COLOR_RESET "%s: " 
+            "no such file or directory" 
+            "\n", path.c_str());
     fileContents << input.rdbuf();
     input.close(); // Good practice, I guess
     return fileContents.str();
 }
 
-static void PrintHelp(const std::string &ExecName) {
-    std::printf("Usage: %s <input_shader> [options]\n", ExecName.c_str());
+static void PrintHelp(const std::string& title) {
+    std::printf("Usage: %s <input_shader> [options]\n", title.c_str());
     std::printf("Options:\n");
     std::printf("     -o, --output       | Select output file\n");
     std::printf("     -h, --help         | Show this help message\n");
@@ -92,7 +93,7 @@ int main(int argc, char* argv[]) {
     Parser parser(tokens, table, source);
     parser.callback = ErrorHandler;
     parser.ReceiveLine = ReceiveLine;
-    std::optional<ParseNode> node = parser.ParseTranslationUnit();
+    //std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
     return 0;
 }

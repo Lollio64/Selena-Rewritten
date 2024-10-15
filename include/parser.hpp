@@ -110,12 +110,12 @@ class Parser {
     std::optional<ParseNode> ParseFunctionDefinition();
 
     // Helper functions for statement parsing
-    std::optional<ParseNode> ParseStatementList();
+    std::optional<ParseNode> ParseStatementList() {}
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseAssigmentExpression();
-    std::optional<ParseNode> ParseMultiplicativeExpression();
+    std::optional<ParseNode> ParseAssigmentExpression() {}
+    std::optional<ParseNode> ParseMultiplicativeExpression() {}
 
     // TODO: Helper functions for struct parsing
 

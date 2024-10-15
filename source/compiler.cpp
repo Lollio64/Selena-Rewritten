@@ -7,7 +7,7 @@
 static ErrorHandler userHandler = nullptr;
 static std::vector<std::string> errors;
 
-std::string ReceiveLine(std::string& source, int line) {
+static std::string ReceiveLine(std::string& source, int line) {
     std::string ret = "";
     int currentLine = 1;
     for(size_t i = 0; i < source.length(); i++) {
@@ -28,7 +28,8 @@ std::string ReceiveLine(std::string& source, int line) {
 
 static void ErrorCallback(const std::string& errMsg, const std::string& offLine, int line, int offset) {
     std::string msg = "error:" + std::to_string(line) + ":" + std::to_string(offset) + errMsg + "\n" + offLine + "\n";
-    if (userHandler) userHandler(msg);
+    errors.push_back(msg);
+    if(userHandler) userHandler(msg);
 }
 
 void SelenaSetErrorHandler(ErrorHandler handler) {
@@ -44,12 +45,14 @@ SelenaInfo SelenaCompileShaderSource(std::string& source) {
     lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
+    if(!errors.empty()) return {0, false, std::move(errors), nullptr};
+
     Parser parser = Parser(tokens, table, source);
     parser.callback = ErrorCallback;
     parser.ReceiveLine = ReceiveLine;
-
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
-    if(!node) return {0, false, std::move(errors), nullptr};
+
+    if(!errors.empty()) return {0, false, std::move(errors), nullptr};
 
     // TODO: Fix when ShBin CodeGen is available 
     return {0, true, std::move(errors), nullptr};

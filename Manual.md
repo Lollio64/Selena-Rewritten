@@ -2,12 +2,12 @@
 ## Compiler Usage
 Command Line Interface:
 ```
-Usage: selena files [options]...
+Usage: selena <input_shader> [options]
 Options:
-  -o, --out=<file>        Select the output files
-  -h, --help              Shows this help message
-  -v, --verbose           Prints the Parse and Syntax Trees
-  -p, --picasso           Outputs picasso assembly instead
+         -o, --output       | Select output file\n");
+         -h, --help         | Show this help message\n");
+         -v, --verbose      | Print parse and abstract syntax tree structures
+         -s, --assembly     | Output picasso assembly
 ```
 ## Runtime & Compile Compilation
 Selena allows for multiple ways of shader compilation.

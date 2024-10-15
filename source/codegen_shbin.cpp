@@ -1,31 +1,31 @@
 #include "codegen_shbin.hpp"
 
-// Both Pica Shader Types
-enum { VertexShader = 0, GeometryShader = 1};
+enum { ConstBool = 0, ConstIVec4 = 1, ConstFVec4 = 2};
+enum { VertexShader = 0, GeometryShader = 1 };
 
 typedef struct {
-    int magic = 'D' | 'V' << 8 | 'L' << 16 | 'B' << 24; // Magic "DVLB"
-    int dvleCount; // One because, we only compiled one shader at a time
-    int dvleOffset; // Also stays at one, because of that
+    int magic = 'D' | 'V' << 8 | 'L' << 16 | 'B' << 24;
+    int dvleCount; 
+    int dvleOffset;
 } __attribute__((packed)) DVLB;
 
 typedef struct {
     int magic = 'D' | 'V' << 8 | 'L' << 16 | 'P' << 24;
-    int unknown; // Use that for padding, I guess
-    int blobOffset; // Offset to the compiled shader binary blob
-    int blobSize; // Size of the compiled shader binary blob
-    int descOffset; // Operand descriptor table offset
-    int descEntryCount; // Count of operand descriptor table entries
-    int unknown1; // More padding and...
-    int unknown2; // ... and more padding
-    int symOffset; // Offset of filename symbol table
-    int fileSymSize; // Size of filename symbol table
+    int unknown;
+    int blobOffset;
+    int blobSize;
+    int descOffset;
+    int descEntryCount;
+    int unknown1;
+    int unknown2;
+    int symOffset;
+    int fileSymSize;
 } __attribute__((packed)) DVLP;
 
 typedef struct {
-    int magic = 'D' | 'V' << 8 | 'L' << 16 | 'E' << 24; // Magic
-    int unknown; // Padding for now
-    char shaderType; // Type of shader
+    int magic = 'D' | 'V' << 8 | 'L' << 16 | 'E' << 24;
+    int unknown;
+    char shaderType;
     bool mergeOutmaps = true;
     int mainOffset;
     int endMainOffset;
@@ -45,3 +45,11 @@ typedef struct {
     int symbolTableOffset;
     int symbolTableSize;
 } __attribute__((packed)) DVLE;
+
+typedef struct {
+    short labelId;
+    short unknown;
+    int programBlobOffset;
+    int labelLocationSize;
+    int labelSymbolOfset;
+} __attribute__((packed)) LableEntry;

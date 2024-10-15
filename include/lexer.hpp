@@ -89,6 +89,7 @@ struct Token {
     line(line), offset(offset), type(t), value(val) {}
 
     static std::string TokenToString(int t) { return ""; }
+    static std::string TokenToString(Token t) { return ""; }
 
     Token(void) {}
 };

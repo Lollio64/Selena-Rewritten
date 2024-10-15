@@ -36,7 +36,7 @@ std::vector<Token> Lexer::Tokenize(void) {
         }
         if(token.type == Token::Identifer) {
             if(token.value[0] == 'g' && token.value[1] == 'l' 
-            && token.value[2] == '_'&& !table.Lookup(token.value)) {
+            && token.value[2] == '_' && !table.Lookup(token.value)) {
                 Error("illegal usage of reserved keyword", token);
             }
             for(size_t i = 0; i < table.reserved.size(); i++) {

@@ -8,8 +8,7 @@
 #include <memory>
 #include <variant>
 
-class AstNode;
-
+struct AstNode;
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define vectorized [4] = {0}
