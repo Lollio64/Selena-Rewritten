@@ -123,7 +123,40 @@ bool Parser::IsConstructorIdentifier(int t) {
 
 std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     ParseNode node = ParseNode(ParseNode::PrimaryExpression);
+    if(token.type == Token::OpenParenthese) {
+        node.children.push_back(token);
+        Match(Token::OpenParenthese);
+        node.children.push_back(token);
+        Match(Token::CloseParenthese);
+        return node;
+    }
+    switch(token.type) {
+        case Token::True:
+        case Token::False:
+        case Token::FloatLit:
+        case Token::Identifer:
+        case Token::IntegerLit:
+        node.children.push_back(token);
+        Match(token.type);
+        return node;
+        default:
+        Error("unexpected" + Token::TokenToString(token.type)
+        + "in primary expresion", token);
+        break;
+    }
     return std::nullopt;
+}
+
+std::optional<ParseNode> Parser::ParseStatementScope() {
+    ParseNode node;
+    node.children.push_back(token);
+    Match(Token::OpenCurly);
+    while(token.type != Token::CloseCurly) {
+        node.Append(ParseSimpleStatement().value());
+    }
+    node.children.push_back(token);
+    Match(Token::CloseCurly);
+    return node;
 }
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
@@ -142,9 +175,17 @@ std::optional<ParseNode> Parser::ParseFunctionHeader() {
 std::optional<ParseNode> Parser::ParseFunctionParameter() {
     ParseNode node = ParseNode(ParseNode::Declaration);
     if(token.type == Token::Const) {
+        PushState();
         node.children.push_back(token);
         Match(Token::Const);
-    }
+        if(IsParameterQualifier(token.type) && token.type != Token::Input) {
+            Error("output parameter qualifier cannot be marked const", token);
+            return std::nullopt;
+        }
+        PopState();
+        node.children.push_back(token);
+        Match(Token::Const);
+    }  
     if(IsParameterQualifier(token.type)) {
         node.children.push_back(token);
         Match(token.type);
@@ -159,7 +200,6 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
     node.children.push_back(token);
     Match(Token::Identifer);
     return node;
-    return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParseFunctionParameters() {
@@ -186,16 +226,21 @@ std::optional<ParseNode> Parser::ParseFunctionPrototype() {
 
 std::optional<ParseNode> Parser::ParseFunctionDefinition() {
     ParseNode node = ParseNode(ParseNode::FunctionDefinition);
+    node.Append(ParseFunctionPrototype().value());
     return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParsePrecisionQualifier() {
     ParseNode node;
+    node.children.push_back(token);
+    Match(Token::Precision);
     if(IsPrecisionQualifier(token.type)) {
         node = ParseNode(token, ParseNode::PrecisionQualifier);
         Match(token.type);
         return node;
     }
+    Error("expected precision qualifier before " 
+    + Token::TokenToString(token.type), token);
     return std::nullopt;
 }
 
@@ -211,7 +256,8 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
         }
         return std::nullopt;
     }
-    Error("expected layout qualifier before " + Token::TokenToString(token), token);
+    Error("expected layout qualifier before " 
+    + Token::TokenToString(token), token);
     return std::nullopt;
 }
 
@@ -255,8 +301,6 @@ std::optional<ParseNode> Parser::ParseSingleDeclaration() {
 std::optional<ParseNode> Parser::ParseDeclaration() {
     ParseNode node;
     if(token.type == Token::Precision) {
-        node.children.push_back(token);
-        Match(Token::Precision);
         node.children.push_back(ParsePrecisionQualifier().value());
         node.children.push_back(ParseTypeSpecifier().value());
         node.children.push_back(token);
