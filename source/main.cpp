@@ -11,7 +11,7 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 /* A bunch of helper functions */
-
+#ifndef __3DS__
 static std::string ReceiveLine(std::string& source, int line) {
     std::string ret = "";
     int currentLine = 1;
@@ -97,3 +97,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+#endif

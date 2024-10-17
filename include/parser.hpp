@@ -20,8 +20,8 @@ struct ParseNode {
         MultiplicativeExpression,
     };
 
-    int type;
     Token token;
+    int type;
     std::vector<ParseNode> children;
 
     ParseNode() : type(E) {}
@@ -110,13 +110,13 @@ class Parser {
     std::optional<ParseNode> ParseFunctionDefinition();
 
     // Helper functions for statement parsing
-    std::optional<ParseNode> ParseSimpleStatement() {}
+    std::optional<ParseNode> ParseSimpleStatement();
     std::optional<ParseNode> ParseStatementScope();
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseAssigmentExpression() {}
-    std::optional<ParseNode> ParseMultiplicativeExpression() {}
+    std::optional<ParseNode> ParseAssigmentExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseMultiplicativeExpression() {return std::nullopt;}
 
     // TODO: Helper functions for struct parsing
 

@@ -15,7 +15,7 @@ TableEntry* SymbolTable::Lookup(std::string id) {
 }
 
 int SymbolTable::EntryIndex(std::string id) {
-    for (int i = 0; i < entries.size(); i++) {
+    for (size_t i = 0; i < entries.size(); i++) {
         if(entries[i].identifer.compare(id) == 0) {
             return i;
         }

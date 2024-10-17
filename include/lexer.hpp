@@ -86,7 +86,7 @@ struct Token {
     std::string value;
 
     Token(int line, int offset, int t, std::string val) :
-    line(line), offset(offset), type(t), value(val) {}
+    type(t), line(line), offset(offset), value(val) {}
 
     static std::string TokenToString(int t) { return ""; }
     static std::string TokenToString(Token t) { return ""; }

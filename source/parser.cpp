@@ -147,12 +147,14 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     return std::nullopt;
 }
 
+std::optional<ParseNode> Parser::ParseSimpleStatement() {return std::nullopt;}
+
 std::optional<ParseNode> Parser::ParseStatementScope() {
     ParseNode node;
     node.children.push_back(token);
     Match(Token::OpenCurly);
     while(token.type != Token::CloseCurly) {
-        node.Append(ParseSimpleStatement().value());
+        node.Append(ParseSimpleStatement().value_or(ParseNode()));
     }
     node.children.push_back(token);
     Match(Token::CloseCurly);
@@ -162,7 +164,7 @@ std::optional<ParseNode> Parser::ParseStatementScope() {
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;
     if(!IsTypeQualifier(token.type)) {
-        node.Append(ParseSpecifiedType().value());
+        node.Append(ParseSpecifiedType().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::Identifer);
         node.children.push_back(token);
@@ -189,13 +191,13 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
     if(IsParameterQualifier(token.type)) {
         node.children.push_back(token);
         Match(token.type);
-        node.children.push_back(ParseTypeSpecifier().value());
+        node.children.push_back(ParseTypeSpecifier().value_or(ParseNode()));
         Match(token.type);
         node.children.push_back(token);
         Match(Token::Identifer);
         return node;
     }
-    node.Append(ParseTypeSpecifier().value());
+    node.Append(ParseTypeSpecifier().value_or(ParseNode()));
     Match(token.type);
     node.children.push_back(token);
     Match(Token::Identifer);
@@ -205,11 +207,11 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
 std::optional<ParseNode> Parser::ParseFunctionParameters() {
     ParseNode node;
     if(token.type != Token::CloseParenthese) {
-        node.children.push_back(ParseFunctionParameter().value());
+        node.children.push_back(ParseFunctionParameter().value_or(ParseNode()));
         while(token.type == Token::Comma) {
             node.children.push_back(token);
             Match(Token::Comma);
-            node.children.push_back(ParseFunctionParameter().value());
+            node.children.push_back(ParseFunctionParameter().value_or(ParseNode()));
         }
     }
     return node;
@@ -217,8 +219,8 @@ std::optional<ParseNode> Parser::ParseFunctionParameters() {
 
 std::optional<ParseNode> Parser::ParseFunctionPrototype() {
     ParseNode node = ParseNode(ParseNode::FunctionDeclaration);
-    node.Append(ParseFunctionHeader().value());
-    node.Append(ParseFunctionParameters().value());
+    node.Append(ParseFunctionHeader().value_or(ParseNode()));
+    node.Append(ParseFunctionParameters().value_or(ParseNode()));
     node.children.push_back(token);
     Match(Token::CloseParenthese);
     return node;
@@ -226,7 +228,7 @@ std::optional<ParseNode> Parser::ParseFunctionPrototype() {
 
 std::optional<ParseNode> Parser::ParseFunctionDefinition() {
     ParseNode node = ParseNode(ParseNode::FunctionDefinition);
-    node.Append(ParseFunctionPrototype().value());
+    node.Append(ParseFunctionPrototype().value_or(ParseNode()));
     return std::nullopt;
 }
 
@@ -251,7 +253,7 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
         node.children.push_back(token);
         Match(Token::Layout);
         if(token.type == Token::OpenParenthese) {
-            node.Append(ParsePrimaryExpression().value());
+            node.Append(ParsePrimaryExpression().value_or(ParseNode()));
             return node;
         }
         return std::nullopt;
@@ -264,9 +266,9 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
 std::optional<ParseNode> Parser::ParseSpecifiedType() {
     ParseNode node;
     if(IsTypeQualifier(token.type)) {
-        node.Append(ParseTypeQualifier().value());
+        node.Append(ParseTypeQualifier().value_or(ParseNode()));
     }
-    node.Append(ParseTypeSpecifier().value());
+    node.Append(ParseTypeSpecifier().value_or(ParseNode()));
     return node;
 }
 
@@ -292,7 +294,7 @@ std::optional<ParseNode> Parser::ParseTypeQualifier() {
 
 std::optional<ParseNode> Parser::ParseSingleDeclaration() {
     ParseNode node;
-    node.Append(ParseSpecifiedType().value());
+    node.Append(ParseSpecifiedType().value_or(ParseNode()));
     node.children.push_back(token);
     Match(Token::Identifer);
     return node;
@@ -301,16 +303,16 @@ std::optional<ParseNode> Parser::ParseSingleDeclaration() {
 std::optional<ParseNode> Parser::ParseDeclaration() {
     ParseNode node;
     if(token.type == Token::Precision) {
-        node.children.push_back(ParsePrecisionQualifier().value());
-        node.children.push_back(ParseTypeSpecifier().value());
+        node.children.push_back(ParsePrecisionQualifier().value_or(ParseNode()));
+        node.children.push_back(ParseTypeSpecifier().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::SemiColon);
         return node;
     }
     if(token.type == Token::Layout) {
         node = ParseNode(ParseNode::Declaration);
-        node.Append(ParseLayoutQualifier().value());
-        node.Append(ParseSingleDeclaration().value());
+        node.Append(ParseLayoutQualifier().value_or(ParseNode()));
+        node.Append(ParseSingleDeclaration().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::SemiColon);
     }
@@ -320,7 +322,7 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     if(token.type == Token::OpenParenthese) {
         PopState();
         EnableErrors();
-        node = ParseFunctionPrototype().value();
+        node = ParseFunctionPrototype().value_or(ParseNode());
         if(token.type != Token::SemiColon) {
             Error("expected function body after function declarator", token);
         }
@@ -330,7 +332,7 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     EnableErrors();
     node = ParseNode(ParseNode::Declaration);
     //N.Append(ParseInitDeclaratorList()); TODO: Multiple declarations on the same line
-    node.Append(ParseSingleDeclaration().value());
+    node.Append(ParseSingleDeclaration().value_or(ParseNode()));
     node.children.push_back(token);
     Match(Token::SemiColon);
     return node;

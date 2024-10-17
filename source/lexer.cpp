@@ -3,9 +3,9 @@
 #include "symbol.hpp"
 //#include "preprocessor.hpp"
 
-Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), index(0), offset(0), line(0), table(t) {}
+Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), offset(0), index(0), line(0), table(t) {}
 
-char Lexer::Consume(void) { offset++; return source.at(index++); }
+char Lexer::Consume(void) { offset++; return source.at(index++); } 
 
 std::map<std::string, int> Lexer::keywords = {
     {"=", Token::Equal},
@@ -37,11 +37,13 @@ std::vector<Token> Lexer::Tokenize(void) {
         if(token.type == Token::Identifer) {
             if(token.value[0] == 'g' && token.value[1] == 'l' 
             && token.value[2] == '_' && !table.Lookup(token.value)) {
-                Error("illegal usage of reserved keyword", token);
+                Error("illegal usage of reserved keyword '" 
+                + Token::TokenToString(token.type) + "'", token);
             }
             for(size_t i = 0; i < table.reserved.size(); i++) {
                 if(token.value == table.reserved.at(i)) {
-                    Error("illegal usage of reserved keyword", token);
+                    Error("illegal usage of reserved keyword"
+                    + Token::TokenToString(token.type) + "'", token);
                     break;
                 }
             }
@@ -105,7 +107,7 @@ Token Lexer::Tokenize(std::string s) {
     } else if(std::isalpha(s[0])) {
         t = Token(line, offset, Token::Identifer, s);
     } else if(std::isdigit(s[0])) {
-        for(int i = 0; i < s.length(); i++) {
+        for(size_t i = 0; i < s.length(); i++) {
             if(s[i] == '.') {
                 t = Token(line, offset, Token::FloatLit, s);
                 return t;
