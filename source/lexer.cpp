@@ -8,7 +8,7 @@ Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), offset(0), index(0
 char Lexer::Consume(void) { offset++; return source.at(index++); } 
 
 std::map<std::string, int> Lexer::keywords = {
-    {"=", Token::Equal},
+    {"=", Token::Assigment},
     {",", Token::Comma},
     {"mat4", Token::Mat4},
     {"vec3", Token::Vec3},
@@ -34,7 +34,7 @@ std::vector<Token> Lexer::Tokenize(void) {
         if(token.type == Token::Invalid) {
             Error("syntax error", token);
         }
-        if(token.type == Token::Identifer) {
+        if(token.type == Token::Identifier) {
             if(token.value[0] == 'g' && token.value[1] == 'l' 
             && token.value[2] == '_' && !table.Lookup(token.value)) {
                 Error("illegal usage of reserved keyword '" 
@@ -105,7 +105,7 @@ Token Lexer::Tokenize(std::string s) {
     if(keywords.find(s) != keywords.end()) {
         t = Token(line, offset, keywords.find(s)->second, s);
     } else if(std::isalpha(s[0])) {
-        t = Token(line, offset, Token::Identifer, s);
+        t = Token(line, offset, Token::Identifier, s);
     } else if(std::isdigit(s[0])) {
         for(size_t i = 0; i < s.length(); i++) {
             if(s[i] == '.') {

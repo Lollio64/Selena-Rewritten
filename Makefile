@@ -22,6 +22,6 @@ clean:
 	@rm $(wildcard $(INCLUDE)/*.gch) $(TITLE).exe
 
 # Compiling as a library, calls another Makefile
-library: # Ugh, fix this 
+library: # Well it is now fixed...Woohoo!
 	@echo "Compiling the source files to a library..."
 	@make -f Makefile.lib install

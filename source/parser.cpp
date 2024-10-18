@@ -1,7 +1,7 @@
 #include "parser.hpp"
 #include "symbol.hpp"
 
-Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : tokens(token), table(t), index(0), source(s) {}
+Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : table(t), index(0), tokens(token), source(s) {}
 
 void Parser::Match(int t) {
     if(token.type == t)
@@ -12,7 +12,7 @@ void Parser::Match(int t) {
 }
 
 void Parser::Error(const std::string& s, Token t) {
-    std::string line  = ReceiveLine(source, t.line);
+    std::string line = ReceiveLine(source, t.line);
     if(callback) {
         if(useErrors) {
             callback(s, line, t.line, t.offset);
@@ -121,6 +121,74 @@ bool Parser::IsConstructorIdentifier(int t) {
     return false;
 }
 
+bool Parser::IsSelectionStatement(int t) {
+    switch (t) {
+        case Token::If:
+        case Token::Switch:
+        return true;
+    }
+    return false;
+}
+
+bool Parser::IsIterationStatement(int t) {
+    switch(t) {
+        case Token::Do:
+        case Token::For:
+        case Token::While:
+        return true;
+    }
+    return false;
+}
+
+bool Parser::IsJumpStatement(int t) {
+    switch(t) {
+        case Token::Break:
+        case Token::Return:
+        case Token::Continue:
+        return true;
+    }
+    return false;
+}
+
+bool Parser::IsAssignmentOperator(int t) {
+    switch(t) {
+        case Token::Assigment:
+        case Token::AddAssign:
+        case Token::SubAssign:
+        case Token::MulAssign:
+        case Token::DivAssign:
+        return true;    
+    }
+    return false;
+}
+
+bool Parser::IsUnaryOperator(int t) {
+    switch(t) {
+        case Token::Plus:
+        case Token::Minus:
+        case Token::Increment:
+        case Token::Decrement:
+        return true;
+    }
+    return false;
+}
+
+void Parser::InsertDeclaration(ParseNode& node, int type) {
+    TableEntry* entry = nullptr;
+    if(IsTypeSpecifier(node.children[0].token.type)) {
+        if(!table.Lookup(node.children[1].token.value)) {
+            entry = table.Insert(node.children[1].token.value, type);
+            entry->typeSpecifier = node.children[1].token.type;
+        }
+    } else if(IsTypeQualifier(node.children[0].token.type)) {
+        if(!table.Lookup(node.children[2].token.value)) {
+            entry = table.Insert(node.children[2].token.value, type);
+            entry->typeQualifier = node.children[0].token.type;
+            entry->typeSpecifier = node.children[1].token.type;
+        }
+    }
+}
+
 std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     ParseNode node = ParseNode(ParseNode::PrimaryExpression);
     if(token.type == Token::OpenParenthese) {
@@ -134,7 +202,7 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
         case Token::True:
         case Token::False:
         case Token::FloatLit:
-        case Token::Identifer:
+        case Token::Identifier:
         case Token::IntegerLit:
         node.children.push_back(token);
         Match(token.type);
@@ -147,7 +215,27 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseSimpleStatement() {return std::nullopt;}
+std::optional<ParseNode> Parser::ParseSimpleStatement() {
+    if(IsJumpStatement(token.type))
+        return ParseJumpStatement();
+    else if(token.type == Token::Identifier) {
+        PushState();
+        DisableErrors();
+        Match(Token::Identifier);
+        if(token.type == Token::OpenParenthese) {
+            PopState();
+            EnableErrors();
+            return ParseFunctionCall();
+        }
+    } else if(IsSelectionStatement(token.type)) 
+        return ParseSelectionStatement();
+    else if(IsIterationStatement(token.type)) 
+        return ParseIterationStatement();
+    else if(IsTypeQualifier(token.type) || IsTypeSpecifier(token.type) 
+        || token.type == Token::Precision || token.type == Token::Layout)
+        return ParseDeclarationStatement();
+    else return ParseExpressionStatement();
+}
 
 std::optional<ParseNode> Parser::ParseStatementScope() {
     ParseNode node;
@@ -161,12 +249,60 @@ std::optional<ParseNode> Parser::ParseStatementScope() {
     return node;
 }
 
+std::optional<ParseNode> Parser::ParseExpressionStatement() {
+    ParseNode node;
+    if(token.type != Token::SemiColon) {
+        node.Append(ParseExpression().value_or(ParseNode()));
+    }
+    node.children.push_back(token);
+    Match(Token::SemiColon);
+    return node;
+}
+
+std::optional<ParseNode> Parser::ParseExpression() {
+    ParseNode node;
+    PushState();
+    DisableErrors();
+    if(IsUnaryOperator(token.type)) {
+        PopState();
+        EnableErrors();
+        return ParseUnaryExpression();
+    } else if(token.type == Token::Identifier) {
+        Match(Token::Identifier);
+        if(token.type == Token::Increment || token.type == Token::Decrement) {
+            PopState();
+            EnableErrors();
+            return ParseIncrementiveOrDecrementiveExpression();
+        }
+    }
+    node.Append(ParseAssigmentExpression().value_or(ParseNode()));
+    return node;
+}
+
+std::optional<ParseNode> Parser::ParseAssigmentExpression() {
+    ParseNode node = ParseNode(ParseNode::AssigmentExpression);
+    node.children.push_back(token);
+    Match(Token::Identifier);
+    if(IsAssignmentOperator(token.type)) {
+        node.children.push_back(token);
+        Match(token.type);
+        while(token.type != Token::SemiColon) {
+            node.Append(ParsePrimaryExpression().value_or(ParseNode()));
+        }
+        node.children.push_back(token);
+        Match(Token::SemiColon);
+    }
+    Error("expected assigment operator before" 
+    + Token::TokenToString(token.type), token);
+    return std::nullopt;
+}
+
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;
     if(!IsTypeQualifier(token.type)) {
         node.Append(ParseSpecifiedType().value_or(ParseNode()));
         node.children.push_back(token);
-        Match(Token::Identifer);
+        Match(Token::Identifier);
         node.children.push_back(token);
         Match(Token::OpenParenthese);
         return node;
@@ -178,7 +314,6 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
     ParseNode node = ParseNode(ParseNode::Declaration);
     if(token.type == Token::Const) {
         PushState();
-        node.children.push_back(token);
         Match(Token::Const);
         if(IsParameterQualifier(token.type) && token.type != Token::Input) {
             Error("output parameter qualifier cannot be marked const", token);
@@ -194,13 +329,14 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
         node.children.push_back(ParseTypeSpecifier().value_or(ParseNode()));
         Match(token.type);
         node.children.push_back(token);
-        Match(Token::Identifer);
+        Match(Token::Identifier);
         return node;
     }
     node.Append(ParseTypeSpecifier().value_or(ParseNode()));
     Match(token.type);
     node.children.push_back(token);
-    Match(Token::Identifer);
+    Match(Token::Identifier);
+    InsertDeclaration(node, TableEntry::Parameter);
     return node;
 }
 
@@ -292,11 +428,11 @@ std::optional<ParseNode> Parser::ParseTypeQualifier() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseSingleDeclaration() {
+std::optional<ParseNode> Parser::ParseAssigmentExpression() {
     ParseNode node;
     node.Append(ParseSpecifiedType().value_or(ParseNode()));
     node.children.push_back(token);
-    Match(Token::Identifer);
+    Match(Token::Identifier);
     return node;
 }
 
@@ -335,6 +471,7 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     node.Append(ParseSingleDeclaration().value_or(ParseNode()));
     node.children.push_back(token);
     Match(Token::SemiColon);
+    InsertDeclaration(node, TableEntry::Variable);
     return node;
 }
 

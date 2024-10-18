@@ -24,9 +24,9 @@ struct ParseNode {
     int type;
     std::vector<ParseNode> children;
 
-    ParseNode() : type(E) {}
-
     ParseNode(int t) : type(t) {}
+
+    ParseNode() : type(E), token(Token()) {}
 
     ParseNode(Token tok, int t = T) : token(tok), type(t) {}
 
@@ -89,6 +89,14 @@ class Parser {
     static bool IsPrecisionQualifier(int t);
     static bool IsParameterQualifier(int t);
     static bool IsConstructorIdentifier(int t);
+    static bool IsSelectionStatement(int t);
+    static bool IsIterationStatement(int t);
+    static bool IsJumpStatement(int t);
+    static bool IsAssignmentOperator(int t);
+    static bool IsUnaryOperator(int t);
+
+    // Helper functions for interfacing with the symbol table
+    void InsertDeclaration(ParseNode& node, int type);
 
     // Helper functions for declaration parsing
     std::optional<ParseNode> ParseDeclaration();
@@ -112,11 +120,20 @@ class Parser {
     // Helper functions for statement parsing
     std::optional<ParseNode> ParseSimpleStatement();
     std::optional<ParseNode> ParseStatementScope();
+    std::optional<ParseNode> ParseJumpStatement() {return std::nullopt;}
+    std::optional<ParseNode> ParseDeclarationStatement() {return std::nullopt;}
+    std::optional<ParseNode> ParseExpressionStatement();
+    std::optional<ParseNode> ParseIterationStatement() {return std::nullopt;}
+    std::optional<ParseNode> ParseSelectionStatement() {return std::nullopt;}
+    std::optional<ParseNode> ParseFunctionCall() {return std::nullopt;}
 
     // Helper functions for expression parsing
+    std::optional<ParseNode> ParseExpression();
+    std::optional<ParseNode> ParseUnaryExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseAssigmentExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseAssigmentExpression();
     std::optional<ParseNode> ParseMultiplicativeExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseIncrementiveOrDecrementiveExpression();
 
     // TODO: Helper functions for struct parsing
 

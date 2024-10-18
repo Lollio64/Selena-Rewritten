@@ -35,7 +35,7 @@ struct Token {
 
         Const,
         Input,
-        Inout,
+        Inout, 
         Struct,
         Output,
         Layout,
@@ -43,19 +43,27 @@ struct Token {
         Attribute,
         Varying,
 
-        Add,
-        Subtract,
+        Plus,
+        Minus,
         Multiply,
         Divide,
 
-        Equal,
-        PlusEqual,
-        MinusEqual,
-        TimesEqual,
-        DivideEqual,
+        Assigment,
+        AddAssign,
+        SubAssign,
+        MulAssign,
+        DivAssign,
+
+        Increment,
+        Decrement,
 
         If,
         Else,
+        Switch,
+
+        Do,
+        For,
+        While, 
     
         FloatLit,
         IntegerLit,
@@ -72,15 +80,18 @@ struct Token {
         OpenParenthese,
         CloseParenthese,
         SemiColon,
-        Identifer,
+        Identifier,
+
+        Break,
         Return,
+        Continue,
 
         Assembly,
 
         Invalid,
     };
 
-    int type;
+    int type = 0;
     int line = 0;
     int offset = 0;
     std::string value;
@@ -91,7 +102,7 @@ struct Token {
     static std::string TokenToString(int t) { return ""; }
     static std::string TokenToString(Token t) { return ""; }
 
-    Token(void) {}
+    Token(void) {} 
 };
 
 // Forward declaration

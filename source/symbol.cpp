@@ -1,6 +1,7 @@
 #include "symbol.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include "lexer.hpp"
 
 TableEntry* SymbolTable::Insert(std::string id, int type) {
     if(EntryIndex(id) == -1) {
@@ -11,7 +12,7 @@ TableEntry* SymbolTable::Insert(std::string id, int type) {
 
 TableEntry* SymbolTable::Lookup(std::string id) {
     int index = EntryIndex(id);
-    return index == -1 ? nullptr : &entries[EntryIndex(id)];
+    return index == -1 ? nullptr : &entries[index];
 }
 
 int SymbolTable::EntryIndex(std::string id) {
@@ -34,10 +35,15 @@ void SymbolTable::CloseScope() {
 }
 
 SymbolTable::SymbolTable() {
+    TableEntry* entry = nullptr;
     // Insert all reserved keywords for lexing
     entries.reserve(2);
-    Insert("gl_Position", TableEntry::Global);
-    Insert("gl_TexCoord0", TableEntry::Global);
+    entry = Insert("gl_Position", TableEntry::Global);
+    entry->typeSpecifier = Token::Vec4;
+    entry = Insert("gl_TexCoord0", TableEntry::Global);
+    entry->typeSpecifier = Token::Vec3;
+    entry = Insert("gl_Color", TableEntry::Global);
+    entry->typeSpecifier = Token::Vec4;
     reserved.reserve(1);
     reserved.push_back("char");
 }

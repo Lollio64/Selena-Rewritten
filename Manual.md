@@ -11,11 +11,14 @@ Options:
 ```
 ## Runtime & Compile Time Compilation
 Selena allows for multiple ways of shader compilation.<br> 
-There is the usual way of using the command line interface to compile the code to a SHBIN which can be run through bin2s to create a header file.<br>
+There is the usual way of using the command line interface to compile the shader to a SHBIN (Shader Binary) which can be run through bin2s to create a header file.<br>
 Or as picasso assembly which can be optimized, changed and then run through picasso.<br>
 (If speed is a necessity, this step is recommended, due to the compiler not optimizing code at all for now).<br>
-Alternatively the source code can be compiled at runtime, this allows for easy code compilation, at the cost of speed and is currently C++ exclusive.<br> (The entire process has to be profiled first, before deciding if making a C version is a good idea).
+Alternatively the shader can be compiled at runtime, this allows for easy code compilation, at the cost of speed.<br> 
+Right now, this feature is exclusive to C++, because of the usage of C++ only features.<br> 
+(The entire runtime compilation process has to be profiled first, before deciding if C should be supported).
 ## Differences between the GLSL standard
-Due to hardware limitation, there are a lot of differences and removals between the Khronos standard and this version:<br>
+Due to hardware limitation and other, there are a lot of differences and removals and additions between the Khronos standard and this version:<br>
 - Fragment, Tesselation Control, Tesselation Evaluation and Compute Shaders have been support removed, due to lack of hardware support.
-- For now, all `atomic` functions are gonna be abscent for now.
+- For now, all `atomic` functions/keywords have been removed due to involvement with memory management.
+- Unlike GLSL where `enum` is just a reserved keyword, enumerations will be supported in the forseeable future.
