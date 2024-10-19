@@ -26,7 +26,7 @@ struct ParseNode {
 
     ParseNode(int t) : type(t) {}
 
-    ParseNode() : type(E), token(Token()) {}
+    ParseNode() :  token(Token()), type(E) {}
 
     ParseNode(Token tok, int t = T) : token(tok), type(t) {}
 
@@ -129,11 +129,11 @@ class Parser {
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseExpression();
-    std::optional<ParseNode> ParseUnaryExpression();
+    std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
     std::optional<ParseNode> ParsePrimaryExpression();
     std::optional<ParseNode> ParseAssigmentExpression();
     std::optional<ParseNode> ParseMultiplicativeExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParseIncrementiveOrDecrementiveExpression();
+    std::optional<ParseNode> ParseIncrementiveOrDecrementiveExpression() {return std::nullopt;}
 
     // TODO: Helper functions for struct parsing
 

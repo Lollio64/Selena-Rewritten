@@ -3,6 +3,7 @@
 #include <citro3d.h>
 #include <sstream>
 #include <fstream>
+#include <selena/compiler.hpp>
 
 #define CLEAR_COLOR 0x68B0D8FF
 
@@ -22,7 +23,7 @@ static const vertex vertices[] =
 
 #define vertex_list_count (sizeof(vertices)/sizeof(vertices[0]))
 
-//static SelenaInfo info;
+static SelenaInfo info;
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
 static int uLoc_projection;
@@ -42,15 +43,15 @@ static void sceneInit(void)
     // Compile the vertex shader
     std::string source = loadShaderFromFile("romfs:/vshader.vsh");
     //SelenaSetErrorHandler(errorHandler);
-    //info = SelenaCompileShaderSource(source);
-    //if(!info.hasCompiled) {
-    //    for(std::string& s : info.errors)
-    //        printf("%s", s.c_str());
-    //    printf("Failed to compile with %d errors.", errorCount);
-    //}
+    info = SelenaCompileShaderSource(source);
+    if(!info.hasCompiled) {
+        for(std::string& s : info.errors)
+            printf("%s", s.c_str());
+       printf("Failed to compile with %d errors.", info.errors.size());
+    }
 
 	// Load the vertex shader, create a shader program and bind it
-	//vshader_dvlb = DVLB_ParseFile(info.shbinData.get(), info.shbinSize);
+	vshader_dvlb = DVLB_ParseFile(info.shbinData.get(), info.shbinSize);
 	shaderProgramInit(&program);
 	shaderProgramSetVsh(&program, &vshader_dvlb->DVLE[0]);
 	C3D_BindProgram(&program);

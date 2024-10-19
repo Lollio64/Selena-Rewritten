@@ -31,14 +31,83 @@ static std::string ReceiveLine(std::string& source, int line) {
     return ret;
 }
 
+static inline void PrintToken(Token& t) {
+    printf("%s;%d:%d\n", t.value.c_str(), t.line, t.offset);
+}
+
+static void PrintParseTree(ParseNode *node, int depth) {
+    for(int i = 0; i < depth; i++) {
+        printf("   ");
+    }
+    if(node->type != ParseNode::T) {
+        switch (node->type) {
+            case ParseNode::Declaration:
+            printf("DEC%d\n", depth);
+            break;
+            case ParseNode::FunctionDefinition:
+            printf("FUNC_DEF%d\n", depth);
+            break;
+            /*case ParseNode::FUNCTION_CALL:
+            printf("FUNC_CALL%d\n", Depth);
+            break;*/
+            case ParseNode::TypeQualifier:
+            printf("TYPE_QUAL%d:", depth);
+            PrintToken(node->token);
+            break;
+            case ParseNode::TypeSpecifier:
+            printf("TYPE_SPEC%d:", depth);
+            PrintToken(node->token);
+            break;
+            case ParseNode::PrecisionQualifier:
+            printf("PREC_QUAL%d:", depth);
+            PrintToken(node->token);
+            break;
+            case ParseNode::LayoutQualifier:
+            printf("LAYOUT_QUAL%d:", depth);
+            PrintToken(node->token);
+            break;
+            case ParseNode::AssigmentExpression:
+            printf("ASSIGN_EXPR%d:", depth);
+            PrintToken(node->token);
+            break;
+            /*case ParseNode::Expression:
+            printf("EXPR%d\n", Depth);
+            break;*/
+            /*case ParseNode::CONDITIONAL_EXPR:
+            printf("COND_EXPR%d:", Depth);
+            PrintToken(&node->token);
+            break;*/
+            case ParseNode::PrimaryExpression:
+            printf("PRIME_EXPR%d:", depth);
+            PrintToken(node->token);
+            break;
+            case ParseNode::MultiplicativeExpression:
+            printf("MULT_EXPR%d\n", depth);
+            break;
+            case ParseNode::E:
+            printf("E%d\n", depth);
+            break;
+        }
+
+        for(size_t i = 0; i < node->children.size(); i++) {
+            PrintParseTree(&node->children[i], depth + 1);
+        }
+    } else {
+        printf("T%d: ", depth);
+        PrintToken(node->token);
+    }
+}
+
 static std::string SlurpFile(const std::string& path) {
     std::stringstream fileContents;
     std::fstream input(path, std::ios::in);
-    if(!input.is_open())
+    if(!input.is_open()) {
         std::printf(ANSI_COLOR_RED "fatal error: " 
             ANSI_COLOR_RESET "%s: " 
             "no such file or directory" 
             "\n", path.c_str());
+        return "";
+    }
     fileContents << input.rdbuf();
     input.close(); // Good practice, I guess
     return fileContents.str();
@@ -57,6 +126,7 @@ static bool hasErrored = false;
 void ErrorHandler(const std::string& errMsg, const std::string& offLine, int line, int offset) {
     printf(ANSI_COLOR_RED "error:" ANSI_COLOR_RESET "%d:%d: %s\n%s\n", line, offset, errMsg.c_str(), offLine.c_str());
     printf("%*c^\n", offset, ' ');
+    hasErrored = true;
 }
 
 static std::string output = "";
@@ -89,11 +159,20 @@ int main(int argc, char* argv[]) {
     lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
+    for(Token& t : tokens)
+        PrintToken(t);
+
+    if(hasErrored) return EXIT_FAILURE;
+
     // Syntactic & Semantic Analysis
     Parser parser(tokens, table, source);
     parser.callback = ErrorHandler;
     parser.ReceiveLine = ReceiveLine;
-    //std::optional<ParseNode> node = parser.ParseTranslationUnit();
+    std::optional<ParseNode> node = parser.ParseTranslationUnit();
+
+    //PrintParseTree(&node.value(), 0);
+
+    if(hasErrored) return EXIT_FAILURE;
 
     return 0;
 }

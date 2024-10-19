@@ -7,7 +7,7 @@ void Parser::Match(int t) {
     if(token.type == t)
         token = tokens[index++];
     else
-        Error("expected " + Token::TokenToString(t) + "before " 
+        Error("expected " + Token::TokenToString(token) + " before " 
         + Token::TokenToString(token), token);
 }
 
@@ -189,32 +189,6 @@ void Parser::InsertDeclaration(ParseNode& node, int type) {
     }
 }
 
-std::optional<ParseNode> Parser::ParsePrimaryExpression() {
-    ParseNode node = ParseNode(ParseNode::PrimaryExpression);
-    if(token.type == Token::OpenParenthese) {
-        node.children.push_back(token);
-        Match(Token::OpenParenthese);
-        node.children.push_back(token);
-        Match(Token::CloseParenthese);
-        return node;
-    }
-    switch(token.type) {
-        case Token::True:
-        case Token::False:
-        case Token::FloatLit:
-        case Token::Identifier:
-        case Token::IntegerLit:
-        node.children.push_back(token);
-        Match(token.type);
-        return node;
-        default:
-        Error("unexpected" + Token::TokenToString(token.type)
-        + "in primary expresion", token);
-        break;
-    }
-    return std::nullopt;
-}
-
 std::optional<ParseNode> Parser::ParseSimpleStatement() {
     if(IsJumpStatement(token.type))
         return ParseJumpStatement();
@@ -234,7 +208,7 @@ std::optional<ParseNode> Parser::ParseSimpleStatement() {
     else if(IsTypeQualifier(token.type) || IsTypeSpecifier(token.type) 
         || token.type == Token::Precision || token.type == Token::Layout)
         return ParseDeclarationStatement();
-    else return ParseExpressionStatement();
+    return ParseExpressionStatement();
 }
 
 std::optional<ParseNode> Parser::ParseStatementScope() {
@@ -259,15 +233,39 @@ std::optional<ParseNode> Parser::ParseExpressionStatement() {
     return node;
 }
 
+std::optional<ParseNode> Parser::ParsePrimaryExpression() {
+    ParseNode node = ParseNode(ParseNode::PrimaryExpression);
+    if(token.type == Token::OpenParenthese) {
+        node.children.push_back(token);
+        Match(Token::OpenParenthese);
+        node.children.push_back(token);
+        Match(Token::CloseParenthese);
+        return node;
+    }
+    switch(token.type) {
+        case Token::True:
+        case Token::False:
+        case Token::FloatLit:
+        case Token::Identifier:
+        case Token::IntegerLit:
+        node.children.push_back(token);
+        Match(token.type);
+        return node;
+        default:
+        Error("unexpected" + Token::TokenToString(token)
+        + "in primary expresion", token);
+        break;
+    }
+    return std::nullopt;
+}
+
 std::optional<ParseNode> Parser::ParseExpression() {
     ParseNode node;
-    PushState();
-    DisableErrors();
     if(IsUnaryOperator(token.type)) {
-        PopState();
-        EnableErrors();
         return ParseUnaryExpression();
     } else if(token.type == Token::Identifier) {
+        PushState();
+        DisableErrors();
         Match(Token::Identifier);
         if(token.type == Token::Increment || token.type == Token::Decrement) {
             PopState();
@@ -287,13 +285,16 @@ std::optional<ParseNode> Parser::ParseAssigmentExpression() {
         node.children.push_back(token);
         Match(token.type);
         while(token.type != Token::SemiColon) {
-            node.Append(ParsePrimaryExpression().value_or(ParseNode()));
+            if(IsUnaryOperator(token.type))
+                node.Append(ParseUnaryExpression().value_or(ParseNode()));
+            else
+                node.Append(ParsePrimaryExpression().value_or(token = tokens[index++]));
         }
         node.children.push_back(token);
         Match(Token::SemiColon);
     }
     Error("expected assigment operator before" 
-    + Token::TokenToString(token.type), token);
+    + Token::TokenToString(token), token);
     return std::nullopt;
 }
 
@@ -365,7 +366,8 @@ std::optional<ParseNode> Parser::ParseFunctionPrototype() {
 std::optional<ParseNode> Parser::ParseFunctionDefinition() {
     ParseNode node = ParseNode(ParseNode::FunctionDefinition);
     node.Append(ParseFunctionPrototype().value_or(ParseNode()));
-    return std::nullopt;
+    node.Append(ParseStatementScope().value_or(ParseNode()));
+    return node;
 }
 
 std::optional<ParseNode> Parser::ParsePrecisionQualifier() {
@@ -378,24 +380,29 @@ std::optional<ParseNode> Parser::ParsePrecisionQualifier() {
         return node;
     }
     Error("expected precision qualifier before " 
-    + Token::TokenToString(token.type), token);
+    + Token::TokenToString(token), token);
     return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParseLayoutQualifier() {
-    ParseNode node;
-    if(token.type == Token::Layout) {
-        node = ParseNode(ParseNode::LayoutQualifier);
-        node.children.push_back(token);
-        Match(Token::Layout);
-        if(token.type == Token::OpenParenthese) {
+    ParseNode node = ParseNode(ParseNode::LayoutQualifier);
+    node.children.push_back(token);
+    Match(Token::Layout);
+    if(token.type == Token::OpenParenthese) {
+        PushState();
+        DisableErrors();
+        Match(Token::OpenParenthese);
+        Match(Token::Identifier);
+        if(token.type == Token::Assigment) {
+            PopState();
+            EnableErrors();
             node.Append(ParsePrimaryExpression().value_or(ParseNode()));
             return node;
         }
-        return std::nullopt;
+        PopState();
+        EnableErrors();
     }
-    Error("expected layout qualifier before " 
-    + Token::TokenToString(token), token);
+    Error("expected parenthesized assignment expression", token);
     return std::nullopt;
 }
 
@@ -415,20 +422,21 @@ std::optional<ParseNode> Parser::ParseTypeSpecifier() {
         Match(token.type);
         return node;
     }
+    Error("expected type specifier before" + Token::TokenToString(token), token);
     return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParseTypeQualifier() {
     ParseNode node;
     if(IsTypeQualifier(token.type)) {
-        node.children.push_back(ParseNode(token, ParseNode::TypeQualifier));
+        node = ParseNode(token, ParseNode::TypeQualifier);
         Match(token.type);
         return node;
     }
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseAssigmentExpression() {
+std::optional<ParseNode> Parser::ParseSingleDeclaration() {
     ParseNode node;
     node.Append(ParseSpecifiedType().value_or(ParseNode()));
     node.children.push_back(token);
@@ -454,15 +462,18 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     }
     PushState();
     DisableErrors();
-    ParseSingleDeclaration();
-    if(token.type == Token::OpenParenthese) {
-        PopState();
-        EnableErrors();
-        node = ParseFunctionPrototype().value_or(ParseNode());
-        if(token.type != Token::SemiColon) {
-            Error("expected function body after function declarator", token);
+    if(!IsTypeQualifier(token.type)) {
+        ParseSpecifiedType();
+        Match(Token::Identifier);
+        if(token.type == Token::OpenParenthese) {
+            PopState();
+            EnableErrors();
+            node = ParseFunctionPrototype().value_or(ParseNode());
+            if(token.type != Token::SemiColon) {
+                Error("expected ';' after function declaration", token);
+            }
+            return node;
         }
-        return node;
     }
     PopState();
     EnableErrors();
@@ -498,7 +509,7 @@ std::optional<ParseNode> Parser::ParseTranslationUnit(void) {
     while(index < tokens.size()) {
         if(auto stmt = ParseExternalDeclaration())
             node.children.push_back(stmt.value());
-        else return std::nullopt;
+        else exit(EXIT_FAILURE);
     }
     return node;
 }

@@ -11,8 +11,8 @@ Options:
 ```
 ## Runtime & Compile Time Compilation
 Selena allows for multiple ways of shader compilation.<br> 
-There is the usual way of using the command line interface to compile the shader to a SHBIN (Shader Binary) which can be run through bin2s to create a header file.<br>
-Or as picasso assembly which can be optimized, changed and then run through picasso.<br>
+There is the usual way of using the command line interface to compile the shader to a SHBIN (Shader Binary) which can be run through bin2s (located in the devkitPro/tools) to create a header file.<br>
+On the other hand the output can be formatted as picasso assembly which can be optimized, changed and then run through picasso (located in devkitPro/tools).<br>
 (If speed is a necessity, this step is recommended, due to the compiler not optimizing code at all for now).<br>
 Alternatively the shader can be compiled at runtime, this allows for easy code compilation, at the cost of speed.<br> 
 Right now, this feature is exclusive to C++, because of the usage of C++ only features.<br> 

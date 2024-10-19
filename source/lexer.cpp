@@ -38,12 +38,12 @@ std::vector<Token> Lexer::Tokenize(void) {
             if(token.value[0] == 'g' && token.value[1] == 'l' 
             && token.value[2] == '_' && !table.Lookup(token.value)) {
                 Error("illegal usage of reserved keyword '" 
-                + Token::TokenToString(token.type) + "'", token);
+                + Token::TokenToString(token) + "'", token);
             }
             for(size_t i = 0; i < table.reserved.size(); i++) {
                 if(token.value == table.reserved.at(i)) {
                     Error("illegal usage of reserved keyword"
-                    + Token::TokenToString(token.type) + "'", token);
+                    + Token::TokenToString(token) + "'", token);
                     break;
                 }
             }

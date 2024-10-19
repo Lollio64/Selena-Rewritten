@@ -103,8 +103,9 @@ clean:
 install: $(BUILD)
 	@mkdir $(SELENADIR)
 	@mkdir $(SELENADIR)/include
+	@mkdir $(SELENADIR)/include/selena
 	@mkdir $(SELENADIR)/lib
-	@cp $(wildcard $(INCLUDES)/*.hpp) $(SELENADIR)/include
+	@cp $(wildcard $(INCLUDES)/*.hpp) $(SELENADIR)/include/selena
 	@cp lib/libSelena-Rewritten.a $(SELENADIR)/lib
 
 remove: clean
