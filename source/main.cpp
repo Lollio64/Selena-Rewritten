@@ -159,9 +159,6 @@ int main(int argc, char* argv[]) {
     lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
-    for(Token& t : tokens)
-        PrintToken(t);
-
     if(hasErrored) return EXIT_FAILURE;
 
     // Syntactic & Semantic Analysis
@@ -170,7 +167,7 @@ int main(int argc, char* argv[]) {
     parser.ReceiveLine = ReceiveLine;
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
-    //PrintParseTree(&node.value(), 0);
+    PrintParseTree(&node.value(), 0);
 
     if(hasErrored) return EXIT_FAILURE;
 

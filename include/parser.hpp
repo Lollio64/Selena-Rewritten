@@ -26,7 +26,7 @@ struct ParseNode {
 
     ParseNode(int t) : type(t) {}
 
-    ParseNode() :  token(Token()), type(E) {}
+    ParseNode() : token(Token()), type(E) {}
 
     ParseNode(Token tok, int t = T) : token(tok), type(t) {}
 

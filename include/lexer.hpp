@@ -96,6 +96,9 @@ struct Token {
     int offset = 0;
     std::string value;
 
+    Token(const Token& t) : type(t.type), 
+    line(t.line), offset(t.offset), value(t.value) {}
+
     Token(int line, int offset, int t, std::string val) :
     type(t), line(line), offset(offset), value(val) {}
 

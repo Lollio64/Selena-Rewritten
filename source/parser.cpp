@@ -4,9 +4,10 @@
 Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : table(t), index(0), tokens(token), source(s) {}
 
 void Parser::Match(int t) {
-    if(token.type == t)
-        token = tokens[index++];
-    else
+    if(token.type == t) {
+        index++;
+        token = tokens[index];
+    } else
         Error("expected " + Token::TokenToString(token) + " before " 
         + Token::TokenToString(token), token);
 }
@@ -409,9 +410,9 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
 std::optional<ParseNode> Parser::ParseSpecifiedType() {
     ParseNode node;
     if(IsTypeQualifier(token.type)) {
-        node.Append(ParseTypeQualifier().value_or(ParseNode()));
+        node.children.push_back(ParseTypeQualifier().value_or(ParseNode()));
     }
-    node.Append(ParseTypeSpecifier().value_or(ParseNode()));
+    node.children.push_back(ParseTypeSpecifier().value_or(ParseNode()));
     return node;
 }
 
@@ -506,7 +507,8 @@ std::optional<ParseNode> Parser::ParseExternalDeclaration() {
 
 std::optional<ParseNode> Parser::ParseTranslationUnit(void) {
     ParseNode node;
-    while(index < tokens.size()) {
+    token = tokens[index];
+    while(index <= tokens.size()) {
         if(auto stmt = ParseExternalDeclaration())
             node.children.push_back(stmt.value());
         else exit(EXIT_FAILURE);

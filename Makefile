@@ -25,3 +25,8 @@ clean:
 library: # Well it is now fixed...Woohoo!
 	@echo "Compiling the source files to a library..."
 	@make -f Makefile.lib install
+
+# Compiling the code as a GDB debuggable executable 
+debug: # Only difference is the added -g flag
+	@echo "Compiling the source files to a debug executable..."
+	@g++ $(CFLAGS) -g $(wildcard $(SOURCE)/*.cpp)
