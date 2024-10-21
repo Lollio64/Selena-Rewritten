@@ -6,7 +6,6 @@
 
 struct TableEntry {
     enum {
-        Global,
         Function,
         Variable,
         Parameter,

@@ -17,7 +17,7 @@ struct ParseNode {
         FunctionDeclaration,
         PrimaryExpression,
         AssigmentExpression,
-        MultiplicativeExpression,
+        MultiplicativeExpression
     };
 
     Token token;
@@ -84,16 +84,17 @@ class Parser {
     std::optional<ParseNode> ParseTranslationUnit(void);
 
     // Token group checking
+    static bool IsJumpStatement(int t);
     static bool IsTypeSpecifier(int t);
     static bool IsTypeQualifier(int t);
+    static bool IsUnaryOperator(int t);
+    static bool IsBinaryOperator(int t);
+    static bool IsSelectionStatement(int t);
+    static bool IsIterationStatement(int t);
+    static bool IsAssignmentOperator(int t);
     static bool IsPrecisionQualifier(int t);
     static bool IsParameterQualifier(int t);
     static bool IsConstructorIdentifier(int t);
-    static bool IsSelectionStatement(int t);
-    static bool IsIterationStatement(int t);
-    static bool IsJumpStatement(int t);
-    static bool IsAssignmentOperator(int t);
-    static bool IsUnaryOperator(int t);
 
     // Helper functions for interfacing with the symbol table
     void InsertDeclaration(ParseNode& node, int type);

@@ -6,7 +6,8 @@ Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : tabl
 void Parser::Match(int t) {
     if(token.type == t) {
         index++;
-        token = tokens[index];
+        if(index < tokens.size())
+            token = tokens[index];
     } else
         Error("expected " + Token::TokenToString(token) + " before " 
         + Token::TokenToString(token), token);
@@ -174,6 +175,17 @@ bool Parser::IsUnaryOperator(int t) {
     return false;
 }
 
+bool Parser::IsBinaryOperator(int t) {
+    switch(t) {
+        case Token::Plus:
+        case Token::Minus:
+        case Token::Star:
+        case Token::Slash:
+        return true;
+    }
+    return false;
+}
+
 void Parser::InsertDeclaration(ParseNode& node, int type) {
     TableEntry* entry = nullptr;
     if(IsTypeSpecifier(node.children[0].token.type)) {
@@ -239,6 +251,7 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     if(token.type == Token::OpenParenthese) {
         node.children.push_back(token);
         Match(Token::OpenParenthese);
+        node.Append(ParseExpression().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::CloseParenthese);
         return node;
@@ -274,7 +287,15 @@ std::optional<ParseNode> Parser::ParseExpression() {
             return ParseIncrementiveOrDecrementiveExpression();
         }
     }
-    node.Append(ParseAssigmentExpression().value_or(ParseNode()));
+    PushState();
+    DisableErrors();
+    ParsePrimaryExpression();
+    if(IsAssignmentOperator(token.type)) {
+        PopState();
+        EnableErrors();
+        node.Append(ParseAssigmentExpression().value_or(ParseNode()));
+        return node;
+    }
     return node;
 }
 
@@ -400,9 +421,9 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
             node.Append(ParsePrimaryExpression().value_or(ParseNode()));
             return node;
         }
-        PopState();
-        EnableErrors();
     }
+    PopState();
+    EnableErrors();
     Error("expected parenthesized assignment expression", token);
     return std::nullopt;
 }
@@ -417,9 +438,9 @@ std::optional<ParseNode> Parser::ParseSpecifiedType() {
 }
 
 std::optional<ParseNode> Parser::ParseTypeSpecifier() {
-    ParseNode node;
+    ParseNode node = ParseNode(ParseNode::TypeSpecifier);
     if(IsTypeSpecifier(token.type)) {
-        node = ParseNode(token, ParseNode::TypeSpecifier);
+        node.children.push_back(token);
         Match(token.type);
         return node;
     }
@@ -428,9 +449,9 @@ std::optional<ParseNode> Parser::ParseTypeSpecifier() {
 }
 
 std::optional<ParseNode> Parser::ParseTypeQualifier() {
-    ParseNode node;
+    ParseNode node = ParseNode(ParseNode::TypeQualifier);
     if(IsTypeQualifier(token.type)) {
-        node = ParseNode(token, ParseNode::TypeQualifier);
+        node.children.push_back(token);
         Match(token.type);
         return node;
     }
@@ -483,7 +504,7 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     node.Append(ParseSingleDeclaration().value_or(ParseNode()));
     node.children.push_back(token);
     Match(Token::SemiColon);
-    InsertDeclaration(node, TableEntry::Variable);
+    //InsertDeclaration(node, TableEntry::Variable);
     return node;
 }
 
@@ -508,7 +529,7 @@ std::optional<ParseNode> Parser::ParseExternalDeclaration() {
 std::optional<ParseNode> Parser::ParseTranslationUnit(void) {
     ParseNode node;
     token = tokens[index];
-    while(index <= tokens.size()) {
+    while(index <= tokens.size() - 1) {
         if(auto stmt = ParseExternalDeclaration())
             node.children.push_back(stmt.value());
         else exit(EXIT_FAILURE);

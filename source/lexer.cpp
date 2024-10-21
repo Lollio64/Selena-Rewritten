@@ -9,12 +9,12 @@ char Lexer::Consume(void) { offset++; return source.at(index++); }
 
 std::map<std::string, int> Lexer::keywords = {
     {"=", Token::Assigment},
+    {"*", Token::Star},
     {",", Token::Comma},
     {"mat4", Token::Mat4},
     {"vec3", Token::Vec3},
     {"vec2", Token::Vec2},
     {"void", Token::Void},
-    {"*", Token::Multiply},
     {";", Token::SemiColon},
     {"{", Token::OpenCurly},
     {"}", Token::CloseCurly},
@@ -74,14 +74,15 @@ std::string Lexer::ReadString(void) {
         return "";
     } else if(source[index] == '/' && source[index + 1] == '*') {
         while(source[index] != '*' && source[index + 1] != '/') {
-            index++;
-            offset++;
+            Consume();
             if(source[index] == '\n') {
                 offset = 0;
                 line++;
             }
-            if(index > source.length())
-                break;
+            if(index > source.length()) {
+                Error("unclosed comment at the end of file", Token(line, offset, 0, ""));
+                exit(EXIT_FAILURE); // force exit due structure of Tokenize() loop
+            }
         }
         return "";
     } else if(source[index] == '\n') {
@@ -91,7 +92,7 @@ std::string Lexer::ReadString(void) {
     } else if(std::isspace(source[index])) {
         Consume();
     } else {          
-        while(!std::isspace(source[index]) && !std::isalnum(source[index])) {
+        while(!std::isspace(source[index]) &&  !std::isalnum(source[index])) {
             ret.push_back(Consume());
             if(index >= source.length() || source[index] != '=')
                 break;

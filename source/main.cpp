@@ -32,7 +32,7 @@ static std::string ReceiveLine(std::string& source, int line) {
 }
 
 static inline void PrintToken(Token& t) {
-    printf("%s;%d:%d\n", t.value.c_str(), t.line, t.offset);
+    printf("%s:%d:%d\n", t.value.c_str(), t.line, t.offset);
 }
 
 static void PrintParseTree(ParseNode *node, int depth) {
@@ -52,23 +52,18 @@ static void PrintParseTree(ParseNode *node, int depth) {
             break;*/
             case ParseNode::TypeQualifier:
             printf("TYPE_QUAL%d:", depth);
-            PrintToken(node->token);
             break;
             case ParseNode::TypeSpecifier:
             printf("TYPE_SPEC%d:", depth);
-            PrintToken(node->token);
             break;
             case ParseNode::PrecisionQualifier:
             printf("PREC_QUAL%d:", depth);
-            PrintToken(node->token);
             break;
             case ParseNode::LayoutQualifier:
             printf("LAYOUT_QUAL%d:", depth);
-            PrintToken(node->token);
             break;
             case ParseNode::AssigmentExpression:
             printf("ASSIGN_EXPR%d:", depth);
-            PrintToken(node->token);
             break;
             /*case ParseNode::Expression:
             printf("EXPR%d\n", Depth);
@@ -79,7 +74,6 @@ static void PrintParseTree(ParseNode *node, int depth) {
             break;*/
             case ParseNode::PrimaryExpression:
             printf("PRIME_EXPR%d:", depth);
-            PrintToken(node->token);
             break;
             case ParseNode::MultiplicativeExpression:
             printf("MULT_EXPR%d\n", depth);

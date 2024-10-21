@@ -45,8 +45,8 @@ struct Token {
 
         Plus,
         Minus,
-        Multiply,
-        Divide,
+        Star,
+        Slash,
 
         Assigment,
         AddAssign,

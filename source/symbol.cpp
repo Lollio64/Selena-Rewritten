@@ -38,11 +38,11 @@ SymbolTable::SymbolTable() {
     TableEntry* entry = nullptr;
     // Insert all reserved keywords for lexing
     entries.reserve(2);
-    entry = Insert("gl_Position", TableEntry::Global);
+    entry = Insert("gl_Position", TableEntry::Variable);
     entry->typeSpecifier = Token::Vec4;
-    entry = Insert("gl_TexCoord0", TableEntry::Global);
+    entry = Insert("gl_TexCoord0", TableEntry::Variable);
     entry->typeSpecifier = Token::Vec3;
-    entry = Insert("gl_Color", TableEntry::Global);
+    entry = Insert("gl_Color", TableEntry::Variable);
     entry->typeSpecifier = Token::Vec4;
     reserved.reserve(1);
     reserved.push_back("char");
