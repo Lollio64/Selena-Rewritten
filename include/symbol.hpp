@@ -8,7 +8,6 @@ struct TableEntry {
     enum {
         Function,
         Variable,
-        Parameter,
     };
 
     int entryType;

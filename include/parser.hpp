@@ -16,7 +16,7 @@ struct ParseNode {
         FunctionDefinition,
         FunctionDeclaration,
         PrimaryExpression,
-        AssigmentExpression,
+        AssignmentExpression,
         MultiplicativeExpression
     };
 
@@ -89,6 +89,7 @@ class Parser {
     static bool IsTypeQualifier(int t);
     static bool IsUnaryOperator(int t);
     static bool IsBinaryOperator(int t);
+    static bool IsPostfixOperator(int t);
     static bool IsSelectionStatement(int t);
     static bool IsIterationStatement(int t);
     static bool IsAssignmentOperator(int t);
@@ -131,10 +132,11 @@ class Parser {
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseExpression();
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseAssigmentExpression();
+    std::optional<ParseNode> ParseBinaryExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseAssignmentExpression();
     std::optional<ParseNode> ParseMultiplicativeExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParseIncrementiveOrDecrementiveExpression() {return std::nullopt;}
 
     // TODO: Helper functions for struct parsing
 

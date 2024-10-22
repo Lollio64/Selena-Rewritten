@@ -1,6 +1,5 @@
 #include "symbol.hpp"
 #include <algorithm>
-#include <stdexcept>
 #include "lexer.hpp"
 
 TableEntry* SymbolTable::Insert(std::string id, int type) {

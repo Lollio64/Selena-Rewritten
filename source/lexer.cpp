@@ -8,7 +8,7 @@ Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), offset(0), index(0
 char Lexer::Consume(void) { offset++; return source.at(index++); } 
 
 std::map<std::string, int> Lexer::keywords = {
-    {"=", Token::Assigment},
+    {"=", Token::Equal},
     {"*", Token::Star},
     {",", Token::Comma},
     {"mat4", Token::Mat4},
@@ -79,7 +79,7 @@ std::string Lexer::ReadString(void) {
                 offset = 0;
                 line++;
             }
-            if(index > source.length()) {
+            if(index >= source.length()) {
                 Error("unclosed comment at the end of file", Token(line, offset, 0, ""));
                 exit(EXIT_FAILURE); // force exit due structure of Tokenize() loop
             }

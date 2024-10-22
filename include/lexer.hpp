@@ -48,7 +48,7 @@ struct Token {
         Star,
         Slash,
 
-        Assigment,
+        Equal,
         AddAssign,
         SubAssign,
         MulAssign,
@@ -77,9 +77,12 @@ struct Token {
         Comma,
         OpenCurly,
         CloseCurly,
+        OpenBracket,
+        CloseBracket,
         OpenParenthese,
         CloseParenthese,
         SemiColon,
+
         Identifier,
 
         Break,
