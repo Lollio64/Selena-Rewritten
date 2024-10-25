@@ -99,15 +99,16 @@ struct Token {
     int offset = 0;
     std::string value;
 
+    Token(void) {}
+
     Token(const Token& t) : type(t.type), 
     line(t.line), offset(t.offset), value(t.value) {}
 
     Token(int line, int offset, int t, std::string val) :
     type(t), line(line), offset(offset), value(val) {}
 
-    static std::string TokenToString(Token t) { return t.value; }
-
-    Token(void) {} 
+    static std::string TokenToString(int t);
+    static inline std::string TokenToString(Token t) { return t.value; }
 };
 
 // Forward declaration
@@ -120,7 +121,8 @@ class Lexer {
     #ifndef __3DS__
     friend int main(int argc, char* argv[]);
     #endif
-    friend class Parser;
+
+    friend struct Token;
 
     // Source Code + Index
     std::string& source;

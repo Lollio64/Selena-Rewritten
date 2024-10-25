@@ -42,28 +42,28 @@ static void PrintParseTree(ParseNode *node, int depth) {
     if(node->type != ParseNode::T) {
         switch (node->type) {
             case ParseNode::Declaration:
-            printf("DEC%d\n", depth);
+            printf("DEC%d:\n", depth);
             break;
             case ParseNode::FunctionDefinition:
-            printf("FUNC_DEF%d\n", depth);
+            printf("FUNC_DEF%d:\n", depth);
             break;
             /*case ParseNode::FUNCTION_CALL:
             printf("FUNC_CALL%d\n", Depth);
             break;*/
             case ParseNode::TypeQualifier:
-            printf("TYPE_QUAL%d:", depth);
+            printf("TYPE_QUAL%d:\n", depth);
             break;
             case ParseNode::TypeSpecifier:
-            printf("TYPE_SPEC%d:", depth);
+            printf("TYPE_SPEC%d:\n", depth);
             break;
             case ParseNode::PrecisionQualifier:
-            printf("PREC_QUAL%d:", depth);
+            printf("PREC_QUAL%d:\n", depth);
             break;
             case ParseNode::LayoutQualifier:
-            printf("LAYOUT_QUAL%d:", depth);
+            printf("LAYOUT_QUAL%d:\n", depth);
             break;
-            case ParseNode::AssigmentExpression:
-            printf("ASSIGN_EXPR%d:", depth);
+            case ParseNode::AssignmentExpression:
+            printf("ASSIGN_EXPR%d:\n", depth);
             break;
             /*case ParseNode::Expression:
             printf("EXPR%d\n", Depth);
@@ -73,13 +73,13 @@ static void PrintParseTree(ParseNode *node, int depth) {
             PrintToken(&node->token);
             break;*/
             case ParseNode::PrimaryExpression:
-            printf("PRIME_EXPR%d:", depth);
+            printf("PRIME_EXPR%d:\n", depth);
             break;
             case ParseNode::MultiplicativeExpression:
-            printf("MULT_EXPR%d\n", depth);
+            printf("MULT_EXPR%d:\n", depth);
             break;
             case ParseNode::E:
-            printf("E%d\n", depth);
+            printf("E%d:\n", depth);
             break;
         }
 

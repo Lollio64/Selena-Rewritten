@@ -28,5 +28,5 @@ library: # Well it is now fixed...Woohoo!
 
 # Compiling the code as a GDB debuggable executable 
 debug: # Only difference is the added -g flag
-	@echo "Compiling the source files to a debug executable..."
+	@echo "Compiling the source files to a debuggable executable..."
 	@g++ $(CFLAGS) -g $(wildcard $(SOURCE)/*.cpp)

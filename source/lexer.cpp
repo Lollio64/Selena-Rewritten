@@ -7,10 +7,18 @@ Lexer::Lexer(std::string& src, SymbolTable& t) : source(src), offset(0), index(0
 
 char Lexer::Consume(void) { offset++; return source.at(index++); } 
 
+std::string Token::TokenToString(int t) { 
+    for(auto k : Lexer::keywords)
+        if(t == k.second)
+            return k.first;
+    return "";
+}
+
 std::map<std::string, int> Lexer::keywords = {
     {"=", Token::Equal},
     {"*", Token::Star},
     {",", Token::Comma},
+    {"in", Token::Input},
     {"mat4", Token::Mat4},
     {"vec3", Token::Vec3},
     {"vec2", Token::Vec2},
@@ -113,8 +121,8 @@ Token Lexer::Tokenize(std::string s) {
                 t = Token(line, offset, Token::FloatLit, s);
                 return t;
             }
-            t = Token(line, offset, Token::IntegerLit, s);
         }
+        t = Token(line, offset, Token::IntegerLit, s);
     } else t = Token(line, offset, Token::Invalid, s);
     return t;
 }

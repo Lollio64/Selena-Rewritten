@@ -8,9 +8,10 @@ void Parser::Match(int t) {
         index++;
         if(index < tokens.size())
             token = tokens[index];
-    } else
-        Error("expected " + Token::TokenToString(token) + " before " 
-        + Token::TokenToString(token), token);
+    } else {
+        Error("expected '" + Token::TokenToString(t) + "' before '" 
+        + Token::TokenToString(token) + "'", token);
+    }
 }
 
 void Parser::Error(const std::string& s, Token t) {
@@ -198,6 +199,17 @@ bool Parser::IsPostfixOperator(int t) {
     return false;
 }
 
+bool Parser::IsExpressionSeperator(int t) {
+    switch(t) {
+        case Token::Comma:
+        case Token::SemiColon:
+        case Token::CloseBracket:
+        case Token::CloseParenthese:
+        return true;
+    }
+    return false;
+}
+
 void Parser::InsertDeclaration(ParseNode& node, int type) {
     TableEntry* entry = nullptr;
     if(IsTypeSpecifier(node.children[0].token.type)) {
@@ -242,7 +254,7 @@ std::optional<ParseNode> Parser::ParseStatementScope() {
 std::optional<ParseNode> Parser::ParseExpressionStatement() {
     ParseNode node;
     if(token.type != Token::SemiColon) {
-        node.Append(ParseExpression().value_or(ParseNode()));
+        node.children.push_back(ParseExpression().value_or(ParseNode()));
     }
     node.children.push_back(token);
     Match(Token::SemiColon);
@@ -254,7 +266,7 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     if(token.type == Token::OpenParenthese) {
         node.children.push_back(token);
         Match(Token::OpenParenthese);
-        node.Append(ParseExpression().value_or(ParseNode()));
+        node.children.push_back(ParseExpression().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::CloseParenthese);
         return node;
@@ -269,8 +281,8 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
         Match(token.type);
         return node;
         default:
-        Error("unexpected" + Token::TokenToString(token)
-        + "in primary expresion", token);
+        Error("unexpected '" + Token::TokenToString(token)
+        + "' in primary expression", token);
         break;
     }
     return std::nullopt;
@@ -288,8 +300,8 @@ std::optional<ParseNode> Parser::ParseExpression() {
             EnableErrors();
             return ParsePostfixExpression();
         }
+        PopState();
     }
-    PopState();
     PushState();
     ParsePrimaryExpression();
     if(IsBinaryOperator(token.type)) {
@@ -301,7 +313,25 @@ std::optional<ParseNode> Parser::ParseExpression() {
         EnableErrors();
         return ParseAssignmentExpression();
     }
+    PopState();
+    EnableErrors();
     return ParsePrimaryExpression();
+}
+
+std::optional<ParseNode> Parser::ParseBinaryExpression() {
+    switch(token.type) {
+        case Token::Plus:
+        case Token::Minus:
+        case Token::Slash:
+        Error("illegal usage of reserved operator '" 
+        + Token::TokenToString(token.type) + "'", token);
+        return std::nullopt;
+        case Token::Star:
+        return ParseMultiplicativeExpression();
+    }
+    Error("expected operator before '" 
+    + Token::TokenToString(token) + "'", token);
+    return std::nullopt;
 }
 
 std::optional<ParseNode> Parser::ParseAssignmentExpression() {
@@ -311,17 +341,16 @@ std::optional<ParseNode> Parser::ParseAssignmentExpression() {
     if(IsAssignmentOperator(token.type)) {
         node.children.push_back(token);
         Match(token.type);
-        while(token.type != Token::SemiColon || token.type != Token::CloseParenthese
-            || token.type != Token::Comma) {
+        while(!IsExpressionSeperator(token.type)) {
             node.Append(ParseExpression().value_or(ParseNode()));
         }
-        node.children.push_back(token);
-        Match(Token::SemiColon);
+        return node;
     }
-    Error("expected assigment operator before" 
-    + Token::TokenToString(token), token);
+    Error("expected assigment operator before '" + Token::TokenToString(token) + "'", token);
     return std::nullopt;
 }
+
+std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {}
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;
@@ -340,12 +369,14 @@ std::optional<ParseNode> Parser::ParseFunctionParameter() {
     ParseNode node = ParseNode(ParseNode::Declaration);
     if(token.type == Token::Const) {
         PushState();
+        DisableErrors();
         Match(Token::Const);
         if(IsParameterQualifier(token.type) && token.type != Token::Input) {
             Error("output parameter qualifier cannot be marked as const", token);
             return std::nullopt;
         }
         PopState();
+        EnableErrors();
         node.children.push_back(token);
         Match(Token::Const);
     }  
@@ -421,7 +452,7 @@ std::optional<ParseNode> Parser::ParseLayoutQualifier() {
         if(token.type == Token::Equal) {
             PopState();
             EnableErrors();
-            node.Append(ParsePrimaryExpression().value_or(ParseNode()));
+            node.children.push_back(ParsePrimaryExpression().value_or(ParseNode()));
             return node;
         }
     }
@@ -447,7 +478,7 @@ std::optional<ParseNode> Parser::ParseTypeSpecifier() {
         Match(token.type);
         return node;
     }
-    Error("expected type specifier before" + Token::TokenToString(token), token);
+    Error("expected type specifier before '" + Token::TokenToString(token) + "'", token);
     return std::nullopt;
 }
 
@@ -480,10 +511,11 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     }
     if(token.type == Token::Layout) {
         node = ParseNode(ParseNode::Declaration);
-        node.Append(ParseLayoutQualifier().value_or(ParseNode()));
-        node.Append(ParseSingleDeclaration().value_or(ParseNode()));
+        node.children.push_back(ParseLayoutQualifier().value_or(ParseNode()));
+        node.children.push_back(ParseSingleDeclaration().value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::SemiColon);
+        return node;
     }
     PushState();
     DisableErrors();
@@ -532,7 +564,7 @@ std::optional<ParseNode> Parser::ParseExternalDeclaration() {
 std::optional<ParseNode> Parser::ParseTranslationUnit(void) {
     ParseNode node;
     token = tokens[index];
-    while(index <= tokens.size() - 1) {
+    while(index < tokens.size()) {
         if(auto stmt = ParseExternalDeclaration())
             node.children.push_back(stmt.value());
         else exit(EXIT_FAILURE);

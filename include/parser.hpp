@@ -22,7 +22,7 @@ struct ParseNode {
 
     Token token;
     int type;
-    std::vector<ParseNode> children;
+    std::vector<ParseNode> children = {};
 
     ParseNode(int t) : type(t) {}
 
@@ -95,6 +95,7 @@ class Parser {
     static bool IsAssignmentOperator(int t);
     static bool IsPrecisionQualifier(int t);
     static bool IsParameterQualifier(int t);
+    static bool IsExpressionSeperator(int t);
     static bool IsConstructorIdentifier(int t);
 
     // Helper functions for interfacing with the symbol table
@@ -132,11 +133,11 @@ class Parser {
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseExpression();
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParsePostfixExpression();
+    std::optional<ParseNode> ParsePostfixExpression() {return std::nullopt;}
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseBinaryExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseBinaryExpression();
     std::optional<ParseNode> ParseAssignmentExpression();
-    std::optional<ParseNode> ParseMultiplicativeExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseMultiplicativeExpression();
 
     // TODO: Helper functions for struct parsing
 

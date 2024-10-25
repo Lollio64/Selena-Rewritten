@@ -27,11 +27,13 @@ static SelenaInfo info;
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
 static int uLoc_projection;
+static int uLoc_modelView;
 static C3D_Mtx projection;
 
 static void* vbo_data;
 
-static std::string loadShaderFromFile(const char* path) {
+static std::string loadShaderFromFile(const char* path) 
+{
     std::ifstream in = std::ifstream(std::string(path));
     std::stringstream ss;
     ss << in.rdbuf();
@@ -58,15 +60,13 @@ static void sceneInit(void)
 
 	// Get the location of the uniforms
 	uLoc_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
+	uLoc_modelView  = shaderInstanceGetUniformLocation(program.vertexShader, "modelView");
 
 	// Configure attributes for use with the vertex shader
 	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
 	AttrInfo_Init(attrInfo);
 	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3); // v0=position
-	AttrInfo_AddFixed(attrInfo, 1); // v1=color
-
-	// Set the fixed attribute (color) to solid white
-	C3D_FixedAttribSet(1, 1.0, 1.0, 1.0, 1.0);
+	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 3); // v1=color
 
 	// Compute the projection matrix
 	Mtx_OrthoTilt(&projection, 0.0, 400.0, 0.0, 240.0, 0.0, 1.0, true);
@@ -90,8 +90,15 @@ static void sceneInit(void)
 
 static void sceneRender(void)
 {
+	// Calculate the modelView matrix
+    C3D_Mtx modelView;
+	Mtx_Identity(&modelView);
+	Mtx_Translate(&modelView, 0, 0, 0, true);
+	Mtx_Scale(&modelView, 1, 1, 1);
+
 	// Update the uniforms
 	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projection);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_modelView,  &modelView);
 
 	// Draw the VBO
 	C3D_DrawArrays(GPU_TRIANGLES, 0, vertex_list_count);
