@@ -42,28 +42,28 @@ static void PrintParseTree(ParseNode *node, int depth) {
     if(node->type != ParseNode::T) {
         switch (node->type) {
             case ParseNode::Declaration:
-            printf("DEC%d:\n", depth);
+            printf("Declaration:%d:\n", depth);
             break;
             case ParseNode::FunctionDefinition:
-            printf("FUNC_DEF%d:\n", depth);
+            printf("Function Definition:%d:\n", depth);
             break;
             /*case ParseNode::FUNCTION_CALL:
             printf("FUNC_CALL%d\n", Depth);
             break;*/
             case ParseNode::TypeQualifier:
-            printf("TYPE_QUAL%d:\n", depth);
+            printf("Type Qualifier:%d:\n", depth);
             break;
             case ParseNode::TypeSpecifier:
-            printf("TYPE_SPEC%d:\n", depth);
+            printf("Type Specifier:%d:\n", depth);
             break;
             case ParseNode::PrecisionQualifier:
-            printf("PREC_QUAL%d:\n", depth);
+            printf("Precision Qualifier:%d:\n", depth);
             break;
             case ParseNode::LayoutQualifier:
-            printf("LAYOUT_QUAL%d:\n", depth);
+            printf("Layout Qualifier:%d:\n", depth);
             break;
             case ParseNode::AssignmentExpression:
-            printf("ASSIGN_EXPR%d:\n", depth);
+            printf("Assignment Expression:%d:\n", depth);
             break;
             /*case ParseNode::Expression:
             printf("EXPR%d\n", Depth);
@@ -73,10 +73,10 @@ static void PrintParseTree(ParseNode *node, int depth) {
             PrintToken(&node->token);
             break;*/
             case ParseNode::PrimaryExpression:
-            printf("PRIME_EXPR%d:\n", depth);
+            printf("Primary Expression:%d:\n", depth);
             break;
             case ParseNode::MultiplicativeExpression:
-            printf("MULT_EXPR%d:\n", depth);
+            printf("Multiplicative Expression:%d:\n", depth);
             break;
             case ParseNode::E:
             printf("E%d:\n", depth);

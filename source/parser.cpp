@@ -226,6 +226,10 @@ void Parser::InsertDeclaration(ParseNode& node, int type) {
     }
 }
 
+TableEntry* Parser::LookupFunctionDeclaration(const std::string& id) {
+    return table.Lookup(id);
+}
+
 std::optional<ParseNode> Parser::ParseSimpleStatement() {
     if(IsJumpStatement(token.type))
         return ParseJumpStatement();
@@ -261,6 +265,8 @@ std::optional<ParseNode> Parser::ParseExpressionStatement() {
     return node;
 }
 
+std::optional<ParseNode> Parser::ParseFunctionCall() {}
+
 std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     ParseNode node = ParseNode(ParseNode::PrimaryExpression);
     if(token.type == Token::OpenParenthese) {
@@ -291,7 +297,8 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
 std::optional<ParseNode> Parser::ParseExpression() {
     if(IsUnaryOperator(token.type)) {
         return ParseUnaryExpression();
-    } else if(token.type == Token::Identifier) {
+    } else if(token.type == Token::Identifier 
+           || IsTypeSpecifier(token.type)) {
         PushState();
         DisableErrors();
         Match(Token::Identifier);
@@ -318,18 +325,47 @@ std::optional<ParseNode> Parser::ParseExpression() {
     return ParsePrimaryExpression();
 }
 
+std::optional<ParseNode> Parser::ParsePostfixExpression() {
+    ParseNode node;
+    if(IsTypeSpecifier(token.type)) {
+        PushState();
+        DisableErrors();
+        if(token.type == Token::OpenParenthese) {
+            return ParseFunctionCall();
+        }
+        PopState();
+        EnableErrors();
+        Error("expected '(' after type cast specifier", token);
+        return std::nullopt;
+    }
+    return std::nullopt;
+}
+
 std::optional<ParseNode> Parser::ParseBinaryExpression() {
+    PushState();
+    DisableErrors();
+    ParsePrimaryExpression();
     switch(token.type) {
         case Token::Plus:
+        PopState();
+        EnableErrors();
+        return ParseAdditiveExpression();
         case Token::Minus:
+        PopState();
+        EnableErrors();
+        return ParseSubtractiveExpression();
         case Token::Slash:
-        Error("illegal usage of reserved operator '" 
-        + Token::TokenToString(token.type) + "'", token);
-        return std::nullopt;
+        PopState();
+        EnableErrors();
+        return ParseDivisiveExpression();
         case Token::Star:
+        PopState();
+        EnableErrors();
         return ParseMultiplicativeExpression();
     }
-    Error("expected operator before '" 
+    PopState();
+    EnableErrors();
+    Error("expected binary operator before '" 
     + Token::TokenToString(token) + "'", token);
     return std::nullopt;
 }
@@ -350,7 +386,24 @@ std::optional<ParseNode> Parser::ParseAssignmentExpression() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {}
+std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {
+    ParseNode node = ParseNode(ParseNode::MultiplicativeExpression);
+    DisableErrors();
+    if(auto expr = ParsePrimaryExpression()) {
+        node.children.push_back(expr.value());
+    }
+    EnableErrors();
+    if(token.type == Token::Star) {
+        node.children.push_back(token);
+        Match(Token::Star);
+        while(!IsExpressionSeperator(token.type)) {
+            node.Append(ParseExpression().value_or(ParseNode()));
+        }
+        return node;
+    }
+    Error("expected operator before '" + Token::TokenToString(token) + "'", token);
+    return std::nullopt;
+}
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;

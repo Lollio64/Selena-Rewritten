@@ -9,6 +9,7 @@ struct ParseNode {
         E,
         T,
         Declaration,
+        FunctionCall,
         TypeQualifier,
         TypeSpecifier,
         LayoutQualifier,
@@ -22,6 +23,7 @@ struct ParseNode {
 
     Token token;
     int type;
+    int precedence;
     std::vector<ParseNode> children = {};
 
     ParseNode(int t) : type(t) {}
@@ -38,6 +40,7 @@ struct ParseNode {
 };
 
 class SymbolTable;
+struct TableEntry;
 
 class Parser {
     private:
@@ -100,6 +103,7 @@ class Parser {
 
     // Helper functions for interfacing with the symbol table
     void InsertDeclaration(ParseNode& node, int type);
+    TableEntry* LookupFunctionDeclaration(const std::string& id);
 
     // Helper functions for declaration parsing
     std::optional<ParseNode> ParseDeclaration();
@@ -128,16 +132,20 @@ class Parser {
     std::optional<ParseNode> ParseExpressionStatement();
     std::optional<ParseNode> ParseIterationStatement() {return std::nullopt;}
     std::optional<ParseNode> ParseSelectionStatement() {return std::nullopt;}
-    std::optional<ParseNode> ParseFunctionCall() {return std::nullopt;}
+    std::optional<ParseNode> ParseFunctionCall();
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseExpression();
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParsePostfixExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
     std::optional<ParseNode> ParseBinaryExpression();
     std::optional<ParseNode> ParseAssignmentExpression();
+    std::optional<ParseNode> ParseAdditiveExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseSubtractiveExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseDivisiveExpression() {return std::nullopt;}
     std::optional<ParseNode> ParseMultiplicativeExpression();
+
 
     // TODO: Helper functions for struct parsing
 

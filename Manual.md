@@ -22,3 +22,13 @@ Due to hardware limitation and other, there are a lot of differences and removal
 - Fragment, Tesselation Control, Tesselation Evaluation and Compute Shaders have been support removed, due to lack of hardware support.
 - For now, all `atomic` functions/keywords have been removed due to involvement with memory management.
 - Unlike GLSL where `enum` is just a reserved keyword, enumerations will be supported in the forseeable future.
+## Compiler Documentation
+This is a little documentation about the source code, explaining some techniques and methods that were used to create the compiler.
+### Operator Precedence
+Parse Nodes in a expression may have different precedences, they determine in what order the operation gets executed.<br>
+- Precedence level 0: Addition and Subtraction
+- Precedence level 1: Multiplication and Division
+- Precedence level 2: Parenthesized Expressions (Primary Expressions) 
+
+When the abstract syntax tree gets build from the parse tree, precedence will be omitted in the favor of representing order via hierarchy.
+This happens by looking the expression at a whole and then building a hierarchy from the parse node precedence level.

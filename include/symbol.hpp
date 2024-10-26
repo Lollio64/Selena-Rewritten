@@ -14,6 +14,9 @@ struct TableEntry {
     int typeSpecifier;
     int typeQualifier;
     std::string identifer;
+
+    // This legal?
+    std::vector<TableEntry> parameters;
 };
 
 class SymbolTable {
