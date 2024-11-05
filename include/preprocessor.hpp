@@ -15,6 +15,9 @@ struct Macro {
 class Preprocessor {
     std::vector<Macro> macros;
 
+    Preprocessor(std::string& s);
+
+    std::string PreprocessTranslationUnit(void);
     void ResolveMacros(std::shared_ptr<Token> token);
 
     template<typename T>

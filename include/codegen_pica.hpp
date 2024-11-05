@@ -76,7 +76,7 @@ struct PicaProgram {
     PicaRegisterFile registers;
 };
 
-std::unique_ptr<PicaProgram> BuildIR(AstNode* root);
+std::unique_ptr<PicaProgram> BuildIR(AstNode& root);
 
 class CodeGeneratorPica {
     public:

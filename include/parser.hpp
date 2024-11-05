@@ -8,6 +8,7 @@ struct ParseNode {
     enum {
         E,
         T,
+        Expression,
         Declaration,
         FunctionCall,
         TypeQualifier,
@@ -23,7 +24,6 @@ struct ParseNode {
 
     Token token;
     int type;
-    int precedence;
     std::vector<ParseNode> children = {};
 
     ParseNode(int t) : type(t) {}
@@ -36,7 +36,7 @@ struct ParseNode {
         children.insert(children.end(), node.children.begin(), node.children.end());
     }
 
-    //bool Empty() { return children.size() == 0 && type == E; }
+    bool Empty() { return children.size() == 0 && type == E; }
 };
 
 class SymbolTable;
@@ -61,14 +61,12 @@ class Parser {
     void RestoreState();
     void DisableErrors();
     void EnableErrors();
+    bool useErrors = false;
 
     // Current Parser State
     Token token;
     size_t index = 0;
     std::vector<Token>& tokens;
-
-    // Function to call upon error
-    bool useErrors = false;
     
     #ifndef __3DS__
     friend int main(int argc, char* argv[]);
@@ -79,6 +77,8 @@ class Parser {
 
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
+
+    using ParseFuncPtr = std::optional<ParseNode>(Parser::*)();
 
     // Get the tokens
     Parser(std::vector<Token>& token, SymbolTable& t, std::string& s);
@@ -139,13 +139,10 @@ class Parser {
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
     std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseBinaryExpression();
+    std::optional<ParseNode> ParseOperatorExpression(ParseFuncPtr ptr, int type, std::vector<int> types);
     std::optional<ParseNode> ParseAssignmentExpression();
     std::optional<ParseNode> ParseAdditiveExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParseSubtractiveExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParseDivisiveExpression() {return std::nullopt;}
     std::optional<ParseNode> ParseMultiplicativeExpression();
-
 
     // TODO: Helper functions for struct parsing
 

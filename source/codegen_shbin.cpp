@@ -53,3 +53,24 @@ typedef struct {
     int labelLocationSize;
     int labelSymbolOfset;
 } __attribute__((packed)) LableEntry;
+
+typedef struct {
+    char constantType;
+    char padding;
+    char constantRegister;
+    char padding1;
+    int constantValue[4];
+} __attribute__((packed)) ConstantEntry;
+
+typedef struct {
+    short outputType;
+    short registerID;
+    short outputComponentMask;
+    short unknown;
+} __attribute__((packed)) OutputEntry;
+
+typedef struct {
+    int dvleSymbolOffset;
+    int registerStartIndex;
+    int registerEndIndex;
+} __attribute((packed)) UniformEntry;

@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "symbol.hpp"
+#include <functional>
 
 Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : table(t), index(0), tokens(token), source(s) {}
 
@@ -295,34 +296,9 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
 }
 
 std::optional<ParseNode> Parser::ParseExpression() {
-    if(IsUnaryOperator(token.type)) {
-        return ParseUnaryExpression();
-    } else if(token.type == Token::Identifier 
-           || IsTypeSpecifier(token.type)) {
-        PushState();
-        DisableErrors();
-        Match(Token::Identifier);
-        if(IsPostfixOperator(token.type)) {
-            PopState();
-            EnableErrors();
-            return ParsePostfixExpression();
-        }
-        PopState();
-    }
-    PushState();
-    ParsePrimaryExpression();
-    if(IsBinaryOperator(token.type)) {
-        PopState();
-        EnableErrors();
-        return ParseBinaryExpression();
-    } else if(IsAssignmentOperator(token.type)) {
-        PopState();
-        EnableErrors();
-        return ParseAssignmentExpression();
-    }
-    PopState();
-    EnableErrors();
-    return ParsePrimaryExpression();
+    ParseNode node = ParseNode(ParseNode::Expression);
+    if(token.type == Token::Comma) {}
+    return node;
 }
 
 std::optional<ParseNode> Parser::ParsePostfixExpression() {
@@ -341,33 +317,38 @@ std::optional<ParseNode> Parser::ParsePostfixExpression() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseBinaryExpression() {
-    PushState();
-    DisableErrors();
-    ParsePrimaryExpression();
-    switch(token.type) {
-        case Token::Plus:
-        PopState();
-        EnableErrors();
-        return ParseAdditiveExpression();
-        case Token::Minus:
-        PopState();
-        EnableErrors();
-        return ParseSubtractiveExpression();
-        case Token::Slash:
-        PopState();
-        EnableErrors();
-        return ParseDivisiveExpression();
-        case Token::Star:
-        PopState();
-        EnableErrors();
-        return ParseMultiplicativeExpression();
-    }
-    PopState();
-    EnableErrors();
-    Error("expected binary operator before '" 
-    + Token::TokenToString(token) + "'", token);
-    return std::nullopt;
+std::optional<ParseNode> Parser::ParseOperatorExpression(ParseFuncPtr ptr, int type, std::vector<int> types) {
+    #define CALL_MEMBER_FN(object, ptrToMember) ((object).*(ptrToMember))
+    std::function<bool(int, std::vector<int>&)> IsOfType =
+    [](int t, std::vector<int> &v) -> bool {
+        for(int& i : v)
+            if(i == t) 
+                return false;
+        return true;
+    };
+    std::function<ParseNode(ParseNode&)> ParseRightSide = 
+    [&, this](ParseNode& left) -> ParseNode {
+        ParseNode node;
+        if(IsOfType(token.type, types)) {
+            node.children.push_back(left);
+            node.children.push_back(token);
+            Match(token.type);
+            node.children.push_back(CALL_MEMBER_FN(*this, ptr)().value_or(ParseNode()));
+            ParseNode expr = ParseRightSide(node);
+            if(!expr.Empty()) return expr;
+            return node;
+        }
+    };
+    ParseNode left = CALL_MEMBER_FN(*this, ptr)().value_or(ParseNode());
+    ParseNode right = ParseRightSide(left);
+    if(!right.Empty()) return right;
+    return left;
+    #undef CALL_MEMBER_FN
+}
+
+std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {
+    return ParseOperatorExpression(ParseUnaryExpression, ParseNode::MultiplicativeExpression,
+                                {Token::Star, Token::Slash});
 }
 
 std::optional<ParseNode> Parser::ParseAssignmentExpression() {
@@ -383,25 +364,6 @@ std::optional<ParseNode> Parser::ParseAssignmentExpression() {
         return node;
     }
     Error("expected assigment operator before '" + Token::TokenToString(token) + "'", token);
-    return std::nullopt;
-}
-
-std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {
-    ParseNode node = ParseNode(ParseNode::MultiplicativeExpression);
-    DisableErrors();
-    if(auto expr = ParsePrimaryExpression()) {
-        node.children.push_back(expr.value());
-    }
-    EnableErrors();
-    if(token.type == Token::Star) {
-        node.children.push_back(token);
-        Match(Token::Star);
-        while(!IsExpressionSeperator(token.type)) {
-            node.Append(ParseExpression().value_or(ParseNode()));
-        }
-        return node;
-    }
-    Error("expected operator before '" + Token::TokenToString(token) + "'", token);
     return std::nullopt;
 }
 

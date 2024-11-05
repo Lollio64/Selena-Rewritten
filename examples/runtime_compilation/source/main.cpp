@@ -44,7 +44,6 @@ static void sceneInit(void)
 {
     // Compile the vertex shader
     std::string source = loadShaderFromFile("romfs:/vshader.vsh");
-    //SelenaSetErrorHandler(errorHandler);
     info = SelenaCompileShaderSource(source);
     if(!info.hasCompiled) {
         for(std::string& s : info.errors)

@@ -25,10 +25,7 @@ Due to hardware limitation and other, there are a lot of differences and removal
 ## Compiler Documentation
 This is a little documentation about the source code, explaining some techniques and methods that were used to create the compiler.
 ### Operator Precedence
-Parse Nodes in a expression may have different precedences, they determine in what order the operation gets executed.<br>
-- Precedence level 0: Addition and Subtraction
-- Precedence level 1: Multiplication and Division
-- Precedence level 2: Parenthesized Expressions (Primary Expressions) 
-
-When the abstract syntax tree gets build from the parse tree, precedence will be omitted in the favor of representing order via hierarchy.
+Parse Nodes in a expression may have different precedences, they determine in what order the operation gets executed.<br> 
+The precedence level is the same as in the [C language](https://www.tutorialspoint.com/cprogramming/c_operators_precedence.htm).<br>
+When the abstract syntax tree gets build from the parse tree, precedence will be omitted in the favor of representing order via hierarchy.<br>
 This happens by looking the expression at a whole and then building a hierarchy from the parse node precedence level.
