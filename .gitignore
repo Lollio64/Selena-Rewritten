@@ -1,9 +1,10 @@
 # VSCode and build files
+.vscode/
 lib/
+build/
+
 *.gch
 *.exe
-build/
-.vscode/
 
 # Compiler output
 *.shbin

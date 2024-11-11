@@ -129,6 +129,6 @@ Token Lexer::Tokenize(std::string s) {
 
 void Lexer::Error(const std::string& s, Token t) {
     std::string line = ReceiveLine(source, t.line);
-    if(callback) 
-        callback(s, line, t.line, t.offset);
+    if(Callback) 
+        Callback(s, line, t.line, t.offset);
 }

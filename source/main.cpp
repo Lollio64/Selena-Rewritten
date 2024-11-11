@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 
     // Lexical Analysis
     Lexer lexer(source, table);
-    lexer.callback = ErrorHandler;
+    lexer.Callback = ErrorHandler;
     lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
 
     // Syntactic & Semantic Analysis
     Parser parser(tokens, table, source);
-    parser.callback = ErrorHandler;
+    parser.Callback = ErrorHandler;
     parser.ReceiveLine = ReceiveLine;
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 

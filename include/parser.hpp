@@ -149,7 +149,7 @@ class Parser {
     // Error handling
     std::string& source;
     std::string(*ReceiveLine)(std::string& source, int line);
-    void(*callback)(const std::string&, const std::string&, int, int);
+    void(*Callback)(const std::string&, const std::string&, int, int);
 
     // Internal support for the compiler library
     friend SelenaInfo SelenaCompileShaderSource(std::string& source);

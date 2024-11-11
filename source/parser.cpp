@@ -17,10 +17,8 @@ void Parser::Match(int t) {
 
 void Parser::Error(const std::string& s, Token t) {
     std::string line = ReceiveLine(source, t.line);
-    if(callback) {
-        if(useErrors) {
-            callback(s, line, t.line, t.offset);
-        }
+    if(Callback && useErrors) {
+        Callback(s, line, t.line, t.offset);
     }
 }
 
@@ -71,8 +69,6 @@ bool Parser::IsTypeSpecifier(int t) {
 
 bool Parser::IsTypeQualifier(int t) {
     switch(t) {
-        case Token::Attribute:
-        case Token::Varying:
         case Token::Input:
         case Token::Inout:
         case Token::Const:
@@ -297,7 +293,7 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
 
 std::optional<ParseNode> Parser::ParseExpression() {
     ParseNode node = ParseNode(ParseNode::Expression);
-    if(token.type == Token::Comma) {}
+    while(!IsExpressionSeperator(token.type)) {}
     return node;
 }
 

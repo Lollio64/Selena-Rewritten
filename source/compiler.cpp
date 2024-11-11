@@ -41,14 +41,14 @@ SelenaInfo SelenaCompileShaderSource(std::string& source) {
     errors.clear();
 
     Lexer lexer = Lexer(source, table);
-    lexer.callback = ErrorCallback;
+    lexer.Callback = ErrorCallback;
     lexer.ReceiveLine = ReceiveLine;
     std::vector<Token> tokens = lexer.Tokenize();
 
     if(!errors.empty()) return {0, false, std::move(errors), nullptr};
 
     Parser parser = Parser(tokens, table, source);
-    parser.callback = ErrorCallback;
+    parser.Callback = ErrorCallback;
     parser.ReceiveLine = ReceiveLine;
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 

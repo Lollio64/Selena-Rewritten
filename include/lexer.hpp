@@ -40,8 +40,6 @@ struct Token {
         Output,
         Layout,
         Uniform,
-        Attribute,
-        Varying,
 
         Plus,
         Minus,
@@ -154,7 +152,7 @@ class Lexer {
 
     // Error handling
     std::string(*ReceiveLine)(std::string& source, int line);
-    void(*callback)(const std::string&, const std::string&, int, int);
+    void(*Callback)(const std::string&, const std::string&, int, int);
 
     // Internal support for the compiler library
     friend SelenaInfo SelenaCompileShaderSource(std::string& source);
