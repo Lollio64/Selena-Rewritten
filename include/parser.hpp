@@ -44,6 +44,13 @@ struct TableEntry;
 
 class Parser {
     private:
+    struct OperatorInfo {
+        std::string symbol;
+        bool leftAssoc;
+        int precedence;
+        int exprNodeType;
+    };
+
     struct ParserState {
         Token token;
         size_t index;
@@ -63,6 +70,9 @@ class Parser {
     void EnableErrors();
     bool useErrors = false;
 
+    // A dynamic list of parser states
+    std::vector<ParserState> stateStack;
+
     // Current Parser State
     Token token;
     size_t index = 0;
@@ -72,19 +82,8 @@ class Parser {
     friend int main(int argc, char* argv[]);
     #endif
 
-    // A dynamic list of parser states
-    std::vector<ParserState> stateStack;
-
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
-
-    using ParseFuncPtr = std::optional<ParseNode>(Parser::*)();
-
-    // Get the tokens
-    Parser(std::vector<Token>& token, SymbolTable& t, std::string& s);
-
-    // Turn tokens into a parse tree
-    std::optional<ParseNode> ParseTranslationUnit(void);
 
     // Token group checking
     static bool IsJumpStatement(int t);
@@ -132,24 +131,29 @@ class Parser {
     std::optional<ParseNode> ParseExpressionStatement();
     std::optional<ParseNode> ParseIterationStatement() {return std::nullopt;}
     std::optional<ParseNode> ParseSelectionStatement() {return std::nullopt;}
-    std::optional<ParseNode> ParseFunctionCall();
 
     // Helper functions for expression parsing
+    std::optional<ParseNode> ParseFunctionCall();
     std::optional<ParseNode> ParseExpression();
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
     std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
-    std::optional<ParseNode> ParseOperatorExpression(ParseFuncPtr ptr, int type, std::vector<int> types);
-    std::optional<ParseNode> ParseAssignmentExpression();
-    std::optional<ParseNode> ParseAdditiveExpression() {return std::nullopt;}
-    std::optional<ParseNode> ParseMultiplicativeExpression();
 
     // TODO: Helper functions for struct parsing
+
+    // Turn tokens into a parse tree
+    std::optional<ParseNode> ParseTranslationUnit(void);
+
+    // Get the tokens, symbol table and source code string
+    Parser(std::vector<Token>& token, SymbolTable& t, std::string& s);
 
     // Error handling
     std::string& source;
     std::string(*ReceiveLine)(std::string& source, int line);
     void(*Callback)(const std::string&, const std::string&, int, int);
+
+    // Operator Information for parsing expressions with precedence
+    static std::array<OperatorInfo, 4> operatorInformation;
 
     // Internal support for the compiler library
     friend SelenaInfo SelenaCompileShaderSource(std::string& source);

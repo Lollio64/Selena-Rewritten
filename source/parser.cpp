@@ -4,6 +4,13 @@
 
 Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : table(t), index(0), tokens(token), source(s) {}
 
+std::array<Parser::OperatorInfo, 4> Parser::operatorInformation = {
+    (Parser::OperatorInfo){"*", true, 13, ParseNode::MultiplicativeExpression},
+    (Parser::OperatorInfo){"/", true, 13, ParseNode::MultiplicativeExpression},
+    (Parser::OperatorInfo){"%", true, 13, ParseNode::MultiplicativeExpression},
+    (Parser::OperatorInfo){"=", false, 2, ParseNode::AssignmentExpression},
+};
+
 void Parser::Match(int t) {
     if(token.type == t) {
         index++;
@@ -293,7 +300,8 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
 
 std::optional<ParseNode> Parser::ParseExpression() {
     ParseNode node = ParseNode(ParseNode::Expression);
-    while(!IsExpressionSeperator(token.type)) {}
+    ParseNode left = ParsePrimaryExpression().value_or(ParseNode());
+    while(true) {}
     return node;
 }
 
@@ -313,55 +321,6 @@ std::optional<ParseNode> Parser::ParsePostfixExpression() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseOperatorExpression(ParseFuncPtr ptr, int type, std::vector<int> types) {
-    #define CALL_MEMBER_FN(object, ptrToMember) ((object).*(ptrToMember))
-    std::function<bool(int, std::vector<int>&)> IsOfType =
-    [](int t, std::vector<int> &v) -> bool {
-        for(int& i : v)
-            if(i == t) 
-                return false;
-        return true;
-    };
-    std::function<ParseNode(ParseNode&)> ParseRightSide = 
-    [&, this](ParseNode& left) -> ParseNode {
-        ParseNode node;
-        if(IsOfType(token.type, types)) {
-            node.children.push_back(left);
-            node.children.push_back(token);
-            Match(token.type);
-            node.children.push_back(CALL_MEMBER_FN(*this, ptr)().value_or(ParseNode()));
-            ParseNode expr = ParseRightSide(node);
-            if(!expr.Empty()) return expr;
-            return node;
-        }
-    };
-    ParseNode left = CALL_MEMBER_FN(*this, ptr)().value_or(ParseNode());
-    ParseNode right = ParseRightSide(left);
-    if(!right.Empty()) return right;
-    return left;
-    #undef CALL_MEMBER_FN
-}
-
-std::optional<ParseNode> Parser::ParseMultiplicativeExpression() {
-    return ParseOperatorExpression(ParseUnaryExpression, ParseNode::MultiplicativeExpression,
-                                {Token::Star, Token::Slash});
-}
-
-std::optional<ParseNode> Parser::ParseAssignmentExpression() {
-    ParseNode node = ParseNode(ParseNode::AssignmentExpression);
-    node.children.push_back(token);
-    Match(Token::Identifier);
-    if(IsAssignmentOperator(token.type)) {
-        node.children.push_back(token);
-        Match(token.type);
-        while(!IsExpressionSeperator(token.type)) {
-            node.Append(ParseExpression().value_or(ParseNode()));
-        }
-        return node;
-    }
-    Error("expected assigment operator before '" + Token::TokenToString(token) + "'", token);
-    return std::nullopt;
-}
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;
