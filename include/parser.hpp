@@ -19,6 +19,7 @@ struct ParseNode {
         FunctionDeclaration,
         PrimaryExpression,
         AssignmentExpression,
+        AdditiveExpression,
         MultiplicativeExpression
     };
 
@@ -47,7 +48,7 @@ class Parser {
     struct OperatorInfo {
         std::string symbol;
         bool leftAssoc;
-        int precedence;
+        int precedence = 0;
         int exprNodeType;
     };
 
@@ -85,7 +86,7 @@ class Parser {
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
 
-    // Token group checking
+    // Check if the token adhere's to a group
     static bool IsJumpStatement(int t);
     static bool IsTypeSpecifier(int t);
     static bool IsTypeQualifier(int t);
@@ -109,7 +110,7 @@ class Parser {
     std::optional<ParseNode> ParseExternalDeclaration();
     std::optional<ParseNode> ParseSingleDeclaration();
 
-    // Helper functions for type parsing
+    // Helper functions for type specifier/qualifier parsing
     std::optional<ParseNode> ParseSpecifiedType();
     std::optional<ParseNode> ParseTypeSpecifier();
     std::optional<ParseNode> ParseTypeQualifier();
@@ -134,10 +135,10 @@ class Parser {
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseFunctionCall();
-    std::optional<ParseNode> ParseExpression();
     std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
     std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
+    std::optional<ParseNode> ParseExpression(int minPrec);
 
     // TODO: Helper functions for struct parsing
 
@@ -153,7 +154,8 @@ class Parser {
     void(*Callback)(const std::string&, const std::string&, int, int);
 
     // Operator Information for parsing expressions with precedence
-    static std::array<OperatorInfo, 4> operatorInformation;
+    static std::array<OperatorInfo, 5> operatorInformation;
+    std::optional<OperatorInfo> GetOperatorInfoFromTokenType(std::string& s);
 
     // Internal support for the compiler library
     friend SelenaInfo SelenaCompileShaderSource(std::string& source);

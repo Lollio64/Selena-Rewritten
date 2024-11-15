@@ -65,9 +65,9 @@ static void PrintParseTree(ParseNode *node, int depth) {
             case ParseNode::AssignmentExpression:
             printf("Assignment Expression:%d:\n", depth);
             break;
-            /*case ParseNode::Expression:
-            printf("EXPR%d\n", Depth);
-            break;*/
+            case ParseNode::Expression:
+            printf("Expression:%d:\n", depth);
+            break;
             /*case ParseNode::CONDITIONAL_EXPR:
             printf("COND_EXPR%d:", Depth);
             PrintToken(&node->token);

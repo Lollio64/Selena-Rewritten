@@ -4,10 +4,11 @@
 
 Parser::Parser(std::vector<Token>& token, SymbolTable& t, std::string& s) : table(t), index(0), tokens(token), source(s) {}
 
-std::array<Parser::OperatorInfo, 4> Parser::operatorInformation = {
+std::array<Parser::OperatorInfo, 5> Parser::operatorInformation = {
     (Parser::OperatorInfo){"*", true, 13, ParseNode::MultiplicativeExpression},
     (Parser::OperatorInfo){"/", true, 13, ParseNode::MultiplicativeExpression},
     (Parser::OperatorInfo){"%", true, 13, ParseNode::MultiplicativeExpression},
+    (Parser::OperatorInfo){"+", true, 12, ParseNode::AdditiveExpression},
     (Parser::OperatorInfo){"=", false, 2, ParseNode::AssignmentExpression},
 };
 
@@ -234,6 +235,13 @@ TableEntry* Parser::LookupFunctionDeclaration(const std::string& id) {
     return table.Lookup(id);
 }
 
+std::optional<Parser::OperatorInfo> Parser::GetOperatorInfoFromTokenType(std::string& s) {
+    for(OperatorInfo& op : operatorInformation)
+        if(op.symbol == s)
+            return op;
+    return std::nullopt;
+}
+
 std::optional<ParseNode> Parser::ParseSimpleStatement() {
     if(IsJumpStatement(token.type))
         return ParseJumpStatement();
@@ -261,22 +269,22 @@ std::optional<ParseNode> Parser::ParseStatementScope() {
 
 std::optional<ParseNode> Parser::ParseExpressionStatement() {
     ParseNode node;
-    if(token.type != Token::SemiColon) {
-        node.children.push_back(ParseExpression().value_or(ParseNode()));
+    while(token.type != Token::SemiColon) {
+        node.children.push_back(ParseExpression(0).value_or(ParseNode()));
     }
     node.children.push_back(token);
     Match(Token::SemiColon);
     return node;
 }
 
-std::optional<ParseNode> Parser::ParseFunctionCall() {}
+std::optional<ParseNode> Parser::ParseFunctionCall() { return std::nullopt; }
 
 std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     ParseNode node = ParseNode(ParseNode::PrimaryExpression);
     if(token.type == Token::OpenParenthese) {
         node.children.push_back(token);
         Match(Token::OpenParenthese);
-        node.children.push_back(ParseExpression().value_or(ParseNode()));
+        node.children.push_back(ParseExpression(0).value_or(ParseNode()));
         node.children.push_back(token);
         Match(Token::CloseParenthese);
         return node;
@@ -298,10 +306,36 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     return std::nullopt;
 }
 
-std::optional<ParseNode> Parser::ParseExpression() {
-    ParseNode node = ParseNode(ParseNode::Expression);
+std::optional<ParseNode> Parser::ParseExpression(int minPrec) {
     ParseNode left = ParsePrimaryExpression().value_or(ParseNode());
-    while(true) {}
+    ParseNode node = ParseNode(ParseNode::Expression);
+    ParseNode op = ParseNode();
+
+    if(token.type == Token::Identifier) {
+        Error("expected operator before '" + 
+        Token::TokenToString(token) + "'", token);
+        return std::nullopt;
+    }
+
+    while(true) {
+        if((!IsBinaryOperator(token.type) 
+            && !IsAssignmentOperator(token.type))
+            || GetOperatorInfoFromTokenType(token.value).
+            value_or(OperatorInfo()).precedence < minPrec)
+            break;
+
+        OperatorInfo info = GetOperatorInfoFromTokenType(token.value).value();
+        int nextPrec = info.leftAssoc ? info.precedence + 1 : info.precedence;
+        op = ParseNode(info.exprNodeType);
+
+        op.children.push_back(left);
+        op.children.push_back(token);
+        Match(token.type);
+
+        ParseNode right = ParseExpression(nextPrec).value_or(ParseNode());
+        op.children.push_back(right);
+    }
+    node.children.push_back(op.Empty() ? left : op);
     return node;
 }
 

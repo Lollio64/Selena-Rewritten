@@ -17,6 +17,7 @@ std::string Token::TokenToString(int t) {
 std::map<std::string, int> Lexer::keywords = {
     {"=", Token::Equal},
     {"*", Token::Star},
+    {"+", Token::Plus},
     {",", Token::Comma},
     {"in", Token::Input},
     {"mat4", Token::Mat4},
