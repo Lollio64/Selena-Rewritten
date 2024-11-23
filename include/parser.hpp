@@ -17,7 +17,9 @@ struct ParseNode {
         PrecisionQualifier,
         FunctionDefinition,
         FunctionDeclaration,
+        UnaryExpression,
         PrimaryExpression,
+        PostfixExpression,
         AssignmentExpression,
         AdditiveExpression,
         MultiplicativeExpression
@@ -135,7 +137,7 @@ class Parser {
 
     // Helper functions for expression parsing
     std::optional<ParseNode> ParseFunctionCall();
-    std::optional<ParseNode> ParseUnaryExpression() {return std::nullopt;}
+    std::optional<ParseNode> ParseUnaryExpression();
     std::optional<ParseNode> ParsePostfixExpression();
     std::optional<ParseNode> ParsePrimaryExpression();
     std::optional<ParseNode> ParseExpression(int minPrec);
@@ -155,7 +157,7 @@ class Parser {
 
     // Operator Information for parsing expressions with precedence
     static std::array<OperatorInfo, 5> operatorInformation;
-    std::optional<OperatorInfo> GetOperatorInfoFromTokenType(std::string& s);
+    std::optional<OperatorInfo> GetOperatorInfoFromString(std::string& s);
 
     // Internal support for the compiler library
     friend SelenaInfo SelenaCompileShaderSource(std::string& source);

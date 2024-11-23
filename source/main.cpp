@@ -7,11 +7,18 @@
 #include "parser.hpp"
 #include <cstring>
 
+#ifndef __3DS__
+
 #define ANSI_COLOR_RED  "\x1b[0;31m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+struct Options {
+    bool verbose;
+    bool assembly;
+    std::string output;
+};
+
 /* A bunch of helper functions */
-#ifndef __3DS__
 static std::string ReceiveLine(std::string& source, int line) {
     std::string ret = "";
     int currentLine = 1;
@@ -78,6 +85,9 @@ static void PrintParseTree(ParseNode *node, int depth) {
             case ParseNode::MultiplicativeExpression:
             printf("Multiplicative Expression:%d:\n", depth);
             break;
+            case ParseNode::FunctionCall:
+            printf("Function Call:%d:\n", depth);
+            break;
             case ParseNode::E:
             printf("E%d:\n", depth);
             break;
@@ -113,7 +123,7 @@ static void PrintHelp(const std::string& title) {
     std::printf("     -o, --output       | Select output file\n");
     std::printf("     -h, --help         | Show this help message\n");
     std::printf("     -v, --verbose      | Print parse and abstract syntax tree structures\n");
-    std::printf("     -s, --assembly     | Output picasso assembly\n");
+    std::printf("     -s, --assembly     | Generate and output picasso assembly\n");
 }
 
 static bool hasErrored = false;
@@ -123,26 +133,30 @@ void ErrorHandler(const std::string& errMsg, const std::string& offLine, int lin
     hasErrored = true;
 }
 
-static std::string output = "";
-void ProcessArguments(int argc, char* argv[]) {
-    for(int i = 2; i < argc; i++) {
+static Options ProcessArguments(int argc, char* argv[]) {
+    Options op;
+    for(int i = 0; i < argc; i++) {
         if(std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help")) {
             PrintHelp(argv[0]);
             std::exit(EXIT_SUCCESS);
         } else if(std::strcmp(argv[i], "-o") == 0 || std::strcmp(argv[i], "--output")) {
-            output = argv[i++];
+            op.output = argv[i++];
+            continue;
+        } else if(std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--assembly")) {
+            op.assembly = true;
             continue;
         }
     }
+    return op;
 }
 
 int main(int argc, char* argv[]) {
+    // Process arguments
+    //Options op = ProcessArguments(argc, argv);
+
     // Read source code
     std::string source = SlurpFile(argv[1]);
     if(source.empty()) return 0;
-
-    // Process arguments
-    //ProcessArguments(argc, argv);
 
     // Symbol Table
     SymbolTable table;
@@ -161,7 +175,8 @@ int main(int argc, char* argv[]) {
     parser.ReceiveLine = ReceiveLine;
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
-    PrintParseTree(&node.value(), 0);
+    //if(op.verbose)
+        PrintParseTree(&node.value(), 0);
 
     if(hasErrored) return EXIT_FAILURE;
 

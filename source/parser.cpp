@@ -235,7 +235,7 @@ TableEntry* Parser::LookupFunctionDeclaration(const std::string& id) {
     return table.Lookup(id);
 }
 
-std::optional<Parser::OperatorInfo> Parser::GetOperatorInfoFromTokenType(std::string& s) {
+std::optional<Parser::OperatorInfo> Parser::GetOperatorInfoFromString(std::string& s) {
     for(OperatorInfo& op : operatorInformation)
         if(op.symbol == s)
             return op;
@@ -277,7 +277,32 @@ std::optional<ParseNode> Parser::ParseExpressionStatement() {
     return node;
 }
 
-std::optional<ParseNode> Parser::ParseFunctionCall() { return std::nullopt; }
+std::optional<ParseNode> Parser::ParseFunctionCall() { 
+    ParseNode node = ParseNode(ParseNode::FunctionCall); 
+    if(!IsConstructorIdentifier(token.type) && !token.type == Token::Assembly
+    && !(token.type == Token::Identifier)) {
+        Error("expected function identifier or type constructor before " +
+                Token::TokenToString(token), token);
+        return std::nullopt;
+    }
+    node.children.push_back(token);
+    Match(token.type);
+    node.children.push_back(token);
+    Match(Token::OpenParenthese);
+    if(token.type != Token::CloseParenthese) {
+        ParseNode param;
+        param.children.push_back(ParseExpression(0).value_or(ParseNode()));
+        while(token.type == Token::Comma) {
+            node.children.push_back(token);
+            Match(Token::Comma);
+            param.children.push_back(ParseExpression(0).value_or(ParseNode()));
+        }
+        node.children.push_back(param);
+    }
+    node.children.push_back(token);
+    Match(Token::CloseParenthese);
+    return node;
+}
 
 std::optional<ParseNode> Parser::ParsePrimaryExpression() {
     ParseNode node = ParseNode(ParseNode::PrimaryExpression);
@@ -307,7 +332,7 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
 }
 
 std::optional<ParseNode> Parser::ParseExpression(int minPrec) {
-    ParseNode left = ParsePrimaryExpression().value_or(ParseNode());
+    ParseNode left = ParseUnaryExpression().value_or(ParseNode());
     ParseNode node = ParseNode(ParseNode::Expression);
     ParseNode op = ParseNode();
 
@@ -318,43 +343,48 @@ std::optional<ParseNode> Parser::ParseExpression(int minPrec) {
     }
 
     while(true) {
+        ParseNode child;
         if((!IsBinaryOperator(token.type) 
             && !IsAssignmentOperator(token.type))
-            || GetOperatorInfoFromTokenType(token.value).
+            || GetOperatorInfoFromString(token.value).
             value_or(OperatorInfo()).precedence < minPrec)
             break;
 
-        OperatorInfo info = GetOperatorInfoFromTokenType(token.value).value();
+        OperatorInfo info = GetOperatorInfoFromString(token.value).value();
         int nextPrec = info.leftAssoc ? info.precedence + 1 : info.precedence;
-        op = ParseNode(info.exprNodeType);
+        child = ParseNode(info.exprNodeType);
 
-        op.children.push_back(left);
-        op.children.push_back(token);
+        child.children.push_back(left.Empty() ? ParseNode() : left);
+        left = ParseNode(); // Clear out left side, after it has been used
+        child.children.push_back(token);
         Match(token.type);
 
         ParseNode right = ParseExpression(nextPrec).value_or(ParseNode());
-        op.children.push_back(right);
+        child.children.push_back(right);
+        op.children.push_back(child);
     }
     node.children.push_back(op.Empty() ? left : op);
     return node;
 }
 
 std::optional<ParseNode> Parser::ParsePostfixExpression() {
-    ParseNode node;
-    if(IsTypeSpecifier(token.type)) {
-        PushState();
-        DisableErrors();
-        if(token.type == Token::OpenParenthese) {
-            return ParseFunctionCall();
-        }
-        PopState();
-        EnableErrors();
-        Error("expected '(' after type cast specifier", token);
-        return std::nullopt;
+    ParseNode node = ParseNode(ParseNode::PostfixExpression);
+    if(tokens[index + 1].type == Token::OpenParenthese) {
+        return ParseFunctionCall();
     }
-    return std::nullopt;
+    return ParsePrimaryExpression();
+    
 }
 
+std::optional<ParseNode> Parser::ParseUnaryExpression() {
+    ParseNode node = ParseNode(ParseNode::UnaryExpression);
+    if(IsUnaryOperator(token.type)) {
+        node.children.push_back(token);
+        Match(token.type);
+        node.children.push_back(ParsePrimaryExpression().value_or(ParseNode()));
+    }
+    return ParsePostfixExpression();
+}
 
 std::optional<ParseNode> Parser::ParseFunctionHeader() {
     ParseNode node;
