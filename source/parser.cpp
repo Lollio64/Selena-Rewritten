@@ -318,11 +318,19 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
         case Token::True:
         case Token::False:
         case Token::FloatLit:
-        case Token::Identifier:
         case Token::IntegerLit:
         node.children.push_back(token);
         Match(token.type);
         return node;
+        case Token::Identifier:
+        if(!table.Lookup(token.value)) {
+            Error("use of undeclared identifier '" +
+            Token::TokenToString(token) + "'", token);
+        } else {
+            node.children.push_back(token);
+            Match(token.type);
+            return node;
+        }
         default:
         Error("unexpected '" + Token::TokenToString(token)
         + "' in primary expression", token);

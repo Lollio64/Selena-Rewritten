@@ -13,8 +13,8 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 struct Options {
-    bool verbose;
-    bool assembly;
+    bool verbose = false;
+    bool assembly = false;
     std::string output;
 };
 
@@ -144,6 +144,9 @@ static Options ProcessArguments(int argc, char* argv[]) {
             continue;
         } else if(std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--assembly")) {
             op.assembly = true;
+            continue;
+        } else if(std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--verbose") == 0) {
+            op.verbose = true;
             continue;
         }
     }

@@ -1,12 +1,25 @@
 #ifndef AST_HPP
 #define AST_HPP
 
+struct ParseNode;
+
 struct AstNode {
-    enum {};
+    enum {
+        Function,
+        Variable,
+        Multiply,
+        Assigment
+    };
 };
 
 class AstBuilder {
     private:
-    AstNode BuildTranslationUnit();
+    ParseNode& root;
+
+    AstBuilder(ParseNode& root);
+
+    AstNode BuildExpression();
+
+    AstNode BuildTranslationUnit(void);
 };
 #endif /* AST_HPP */
