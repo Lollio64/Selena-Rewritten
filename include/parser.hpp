@@ -49,9 +49,9 @@ class Parser {
     private:
     struct OperatorInfo {
         std::string symbol;
-        bool leftAssoc;
-        int precedence = 0;
-        int exprNodeType;
+        bool leftAssociate;
+        int precedence;
+        int grammarExpr;
     };
 
     struct ParserState {
@@ -84,6 +84,7 @@ class Parser {
     #ifndef __3DS__
     friend int main(int argc, char* argv[]);
     #endif
+    friend class AstBuilder;
 
     // Helper function for generating an error
     void Error(const std::string& s, Token t);
@@ -94,13 +95,11 @@ class Parser {
     static bool IsTypeQualifier(int t);
     static bool IsUnaryOperator(int t);
     static bool IsBinaryOperator(int t);
-    static bool IsPostfixOperator(int t);
     static bool IsSelectionStatement(int t);
     static bool IsIterationStatement(int t);
     static bool IsAssignmentOperator(int t);
     static bool IsPrecisionQualifier(int t);
     static bool IsParameterQualifier(int t);
-    static bool IsExpressionSeperator(int t);
     static bool IsConstructorIdentifier(int t);
 
     // Helper functions for interfacing with the symbol table

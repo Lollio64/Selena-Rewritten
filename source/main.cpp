@@ -6,6 +6,7 @@
 #include "symbol.hpp"
 #include "parser.hpp"
 #include <cstring>
+#include "ast.hpp"
 
 #ifndef __3DS__
 
@@ -16,6 +17,7 @@ struct Options {
     bool verbose = false;
     bool assembly = false;
     std::string output;
+    std::string input;
 };
 
 /* A bunch of helper functions */
@@ -102,6 +104,60 @@ static void PrintParseTree(ParseNode *node, int depth) {
     }
 }
 
+void PrintAST(AstNode& root, int depth);
+
+void PrintASTNode(AstNode& child, int depth) {
+  switch (child.type) {
+  case AstNode::Function:
+    printf("function:%s:%lu\n", child.token.value.c_str(), child.children.size());
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::FunctionCall:
+    printf("call:%s:%lu\n", child.token.value.c_str(), child.children.size());
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::Assigment:
+    printf("assignment =\n");
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::Multiply:
+    printf("multiply *\n");
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::Variable:
+    printf("variable: %s\n", child.token.value.c_str());
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::FloatLiteral:
+    printf("float:%s\n", child.token.value.c_str());
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::IntLiteral:
+    printf("int:%s\n", child.token.value.c_str());
+    PrintAST(child, depth + 1);
+    break;
+  case AstNode::Declaration:
+    printf("declaration:%s:%lu\n", child.token.value.c_str(), child.children.size());
+  case AstNode::None:
+    printf("EMPTY\n");
+    PrintAST(child, depth + 1);
+    break;
+  default:
+    printf("unk:%d\n", child.type);
+    break;
+  }
+}
+
+void PrintAST(AstNode& root, int depth) {
+    for(auto child : root.children) {
+        for (int i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("D%d ", depth);
+        PrintASTNode(child, depth);
+    }
+}
+
 static std::string SlurpFile(const std::string& path) {
     std::stringstream fileContents;
     std::fstream input(path, std::ios::in);
@@ -135,19 +191,19 @@ void ErrorHandler(const std::string& errMsg, const std::string& offLine, int lin
 
 static Options ProcessArguments(int argc, char* argv[]) {
     Options op;
-    for(int i = 0; i < argc; i++) {
-        if(std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help")) {
+    for(int i = 1; i < argc; i++) {
+        if(std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help") == 0) {
             PrintHelp(argv[0]);
             std::exit(EXIT_SUCCESS);
-        } else if(std::strcmp(argv[i], "-o") == 0 || std::strcmp(argv[i], "--output")) {
+        } else if(std::strcmp(argv[i], "-o") == 0 || std::strcmp(argv[i], "--output") == 0) {
             op.output = argv[i++];
-            continue;
-        } else if(std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--assembly")) {
+        } else if(std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--assembly") == 0) {
             op.assembly = true;
-            continue;
         } else if(std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--verbose") == 0) {
             op.verbose = true;
-            continue;
+        } else {
+            if(op.input.empty()) 
+                op.input = argv[i];
         }
     }
     return op;
@@ -155,10 +211,10 @@ static Options ProcessArguments(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
     // Process arguments
-    //Options op = ProcessArguments(argc, argv);
+    Options op = ProcessArguments(argc, argv);
 
     // Read source code
-    std::string source = SlurpFile(argv[1]);
+    std::string source = SlurpFile(op.input);
     if(source.empty()) return 0;
 
     // Symbol Table
@@ -178,10 +234,18 @@ int main(int argc, char* argv[]) {
     parser.ReceiveLine = ReceiveLine;
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
-    //if(op.verbose)
+    if(op.verbose)
         PrintParseTree(&node.value(), 0);
 
     if(hasErrored) return EXIT_FAILURE;
+
+    AstBuilder builder = AstBuilder(node.value());
+    AstNode root = builder.BuildTranslationUnit();
+
+    if(op.verbose) {
+        printf("\n");
+        PrintAST(root, 0);
+    }
 
     return 0;
 }

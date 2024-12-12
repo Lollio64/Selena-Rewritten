@@ -192,43 +192,15 @@ bool Parser::IsBinaryOperator(int t) {
     return false;
 }
 
-bool Parser::IsPostfixOperator(int t) {
-    switch(t) {
-        case Token::Dot:
-        case Token::OpenBracket:
-        case Token::Increment:
-        case Token::Decrement:
-        case Token::OpenParenthese:
-        return true;
-    }
-    return false;
-}
-
-bool Parser::IsExpressionSeperator(int t) {
-    switch(t) {
-        case Token::Comma:
-        case Token::SemiColon:
-        case Token::CloseBracket:
-        case Token::CloseParenthese:
-        return true;
-    }
-    return false;
-}
-
 void Parser::InsertDeclaration(ParseNode& node, int type) {
     TableEntry* entry = nullptr;
-    if(IsTypeSpecifier(node.children[0].token.type)) {
-        if(!table.Lookup(node.children[1].token.value)) {
-            entry = table.Insert(node.children[1].token.value, type);
-            entry->typeSpecifier = node.children[1].token.type;
-        }
-    } else if(IsTypeQualifier(node.children[0].token.type)) {
-        if(!table.Lookup(node.children[2].token.value)) {
-            entry = table.Insert(node.children[2].token.value, type);
-            entry->typeQualifier = node.children[0].token.type;
-            entry->typeSpecifier = node.children[1].token.type;
-        }
-    }
+    if(IsTypeQualifier(node.children[0].token.type)) {
+        entry = table.Insert(node.children[2].token.value, type);
+        entry->typeQualifier = node.children[0].token.type;
+        entry->typeSpecifier = node.children[1].token.type;
+        return;
+    } else entry = table.Insert(node.children[1].token.value, type);
+    entry->typeSpecifier = node.children[0].token.type;
 }
 
 TableEntry* Parser::LookupFunctionDeclaration(const std::string& id) {
@@ -269,7 +241,7 @@ std::optional<ParseNode> Parser::ParseStatementScope() {
 
 std::optional<ParseNode> Parser::ParseExpressionStatement() {
     ParseNode node;
-    while(token.type != Token::SemiColon) {
+    if(token.type != Token::SemiColon) {
         node.children.push_back(ParseExpression(0).value_or(ParseNode()));
     }
     node.children.push_back(token);
@@ -323,10 +295,10 @@ std::optional<ParseNode> Parser::ParsePrimaryExpression() {
         Match(token.type);
         return node;
         case Token::Identifier:
-        if(!table.Lookup(token.value)) {
+        /*if(!table.Lookup(token.value)) {
             Error("use of undeclared identifier '" +
             Token::TokenToString(token) + "'", token);
-        } else {
+        } else*/ {
             node.children.push_back(token);
             Match(token.type);
             return node;
@@ -359,8 +331,8 @@ std::optional<ParseNode> Parser::ParseExpression(int minPrec) {
             break;
 
         OperatorInfo info = GetOperatorInfoFromString(token.value).value();
-        int nextPrec = info.leftAssoc ? info.precedence + 1 : info.precedence;
-        child = ParseNode(info.exprNodeType);
+        int nextPrec = info.leftAssociate ? info.precedence + 1 : info.precedence;
+        child = ParseNode(info.grammarExpr);
 
         child.children.push_back(left.Empty() ? ParseNode() : left);
         left = ParseNode(); // Clear out left side, after it has been used
@@ -555,6 +527,7 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
         node = ParseNode(ParseNode::Declaration);
         node.children.push_back(ParseLayoutQualifier().value_or(ParseNode()));
         node.children.push_back(ParseSingleDeclaration().value_or(ParseNode()));
+        InsertDeclaration(node, TableEntry::Variable);
         node.children.push_back(token);
         Match(Token::SemiColon);
         return node;
@@ -579,9 +552,9 @@ std::optional<ParseNode> Parser::ParseDeclaration() {
     node = ParseNode(ParseNode::Declaration);
     //N.Append(ParseInitDeclaratorList()); TODO: Multiple declarations on the same line
     node.Append(ParseSingleDeclaration().value_or(ParseNode()));
+    InsertDeclaration(node, TableEntry::Variable);
     node.children.push_back(token);
     Match(Token::SemiColon);
-    //InsertDeclaration(node, TableEntry::Variable);
     return node;
 }
 
