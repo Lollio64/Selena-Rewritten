@@ -2,6 +2,7 @@
 #include "symbol.hpp"
 #include "parser.hpp"
 #include "lexer.hpp"
+#include "ast.hpp"
 
 // Internal library variables
 static ErrorHandler userHandler = nullptr;
@@ -53,6 +54,9 @@ SelenaInfo SelenaCompileShaderSource(std::string& source) {
     std::optional<ParseNode> node = parser.ParseTranslationUnit();
 
     if(!errors.empty()) return {0, false, std::move(errors), nullptr};
+
+    AstBuilder builder = AstBuilder(node.value());
+    AstNode root = builder.BuildTranslationUnit();
 
     // TODO: Fix when ShBin CodeGen is available 
     return {0, true, std::move(errors), nullptr};

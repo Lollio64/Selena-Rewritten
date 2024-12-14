@@ -4,6 +4,7 @@
 #include <vector>
 #include "lexer.hpp"
 
+struct SelenaInfo;
 struct ParseNode;
 
 struct AstNode {
@@ -56,5 +57,7 @@ class AstBuilder {
     AstNode BuildAssignmentExpression(ParseNode& p);
 
     AstNode BuildTranslationUnit(void);
+
+    friend SelenaInfo SelenaCompileShaderSource(std::string& source);
 };
 #endif /* AST_HPP */
