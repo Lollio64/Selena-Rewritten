@@ -111,6 +111,7 @@ void PrintASTNode(AstNode& child, int depth) {
   case AstNode::Function:
     printf("function:%s:%lu\n", child.token.value.c_str(), child.children.size());
     PrintAST(child, depth + 1);
+    printf("\nend");
     break;
   case AstNode::FunctionCall:
     printf("call:%s:%lu\n", child.token.value.c_str(), child.children.size());
@@ -153,7 +154,7 @@ void PrintAST(AstNode& root, int depth) {
         for (int i = 0; i < depth; i++) {
             printf("  ");
         }
-        printf("D%d ", depth);
+        //printf("D%d ", depth);
         PrintASTNode(child, depth);
     }
 }

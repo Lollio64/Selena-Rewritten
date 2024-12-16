@@ -58,8 +58,13 @@ AstNode AstBuilder::BuildExpression(ParseNode& p) {
 AstNode AstBuilder::BuildDeclaration(ParseNode& p) {
     AstNode node = AstNode(AstNode::Declaration);
     for(int i = 0; i < p.children.size(); i++) {
-        if(p.children[i].token.type == Token::Identifier) {
-            node.children.push_back(AstNode(AstNode::Variable, p.children[i].token));
+        if(p.children[i].type == ParseNode::LayoutQualifier) {
+            while(p.children[i].type != ParseNode::E)
+                i++;
+            ParseNode& decl = p.children[i];
+            node.token = BuildDeclaration(decl).token; 
+        } else if(p.children[i].token.type == Token::Identifier) {
+            node.token = p.children[i].token;
         } else if(p.children[i].token.type == Token::SemiColon) {
             break;
         }
@@ -74,6 +79,8 @@ AstNode AstBuilder::BuildFunctionDefintion(ParseNode& p) {
             node.token = p.children[i].token;
         } else if(p.children[i].token.type == Token::OpenCurly) {
             node.children.push_back(BuildStatementScope(p.children[i++]));
+        } else if(p.children[i].token.type == Token::CloseCurly) {
+            break;
         }
     }
     return node;

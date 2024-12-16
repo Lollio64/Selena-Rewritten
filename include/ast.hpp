@@ -21,7 +21,7 @@ struct AstNode {
 
     Token token;
     int type;
-    std::vector<AstNode> children;
+    std::vector<AstNode> children = {};
 
     AstNode(int type = None) : type(type) {}
 
