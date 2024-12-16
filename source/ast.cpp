@@ -39,17 +39,22 @@ AstNode AstBuilder::BuildAssignmentExpression(ParseNode& p) {
 
 AstNode AstBuilder::BuildExpression(ParseNode& p) {
     AstNode node;
-    node.children.push_back(BuildPrimaryExpression(p));
-    for(int i = 0; i < p.children.size() - 1; i++) {
-        if(p.children[i].token.type == Token::SemiColon)
+    ParseNode expr = p.children[0].children[0];
+    node.children.push_back(BuildPrimaryExpression(expr.children[0]));
+    for(int i = 0; i < expr.children.size() - 1; i++) {
+        if(expr.children[i].token.type == Token::SemiColon)
             break;
 
-        if(Parser::IsAssignmentOperator(p.children[i].token.type)) {
-            node.children.push_back(BuildAssignmentExpression(p.children[i]));
+        if(Parser::IsAssignmentOperator(expr.children[i].token.type)) {
+            node.children.push_back(BuildAssignmentExpression(expr.children[i]));
             node.type = AstNode::Assigment;
-        } else if(Parser::IsBinaryOperator(p.children[i].token.type)) {
-            node.children.push_back(BuildExpression(p.children[i]));
-            node.type = OperatorToInstruction(p.children[i].token);
+        } else if(Parser::IsAssignmentOperator(expr.children[i + 1].token.type)) {
+            node.children.push_back(BuildPrimaryExpression(expr.children[i]));
+            node.children.push_back(BuildAssignmentExpression(expr.children[i]));
+            node.type = AstNode::Assigment;
+        } else if(Parser::IsBinaryOperator(expr.children[i].token.type) || expr.children[i].type == ParseNode::Expression) {
+            node.children.push_back(BuildExpression(expr));
+            node.type = OperatorToInstruction(expr.children[i].token);
         }
     }
     return node;
@@ -78,9 +83,7 @@ AstNode AstBuilder::BuildFunctionDefintion(ParseNode& p) {
         if(p.children[i].token.type == Token::Identifier) {
             node.token = p.children[i].token;
         } else if(p.children[i].token.type == Token::OpenCurly) {
-            node.children.push_back(BuildStatementScope(p.children[i++]));
-        } else if(p.children[i].token.type == Token::CloseCurly) {
-            break;
+            node.children.push_back(BuildStatementScope(p));
         }
     }
     return node;
